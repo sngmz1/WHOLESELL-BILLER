@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Listing - Wholesale Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .search-box button:hover {
+            background: #5568d3;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        .products-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .product-details {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .price-section {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .mrp-display {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .case-total {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .discount-info {
+            font-size: 12px;
+            color: #27ae60;
+            background: #e8f5e9;
+            padding: 5px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+
+        .quantity-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .quantity-section label {
+            font-weight: bold;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .quantity-section input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #5568d3;
+        }
+
+        .add-btn:active {
+            transform: scale(0.98);
+        }
+
+        .cart-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .cart-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .cart-empty {
+            text-align: center;
+            color: #999;
+            padding: 20px 0;
+            font-size: 14px;
+        }
+
+        .cart-items {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            background: #f9f9f9;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+            font-size: 13px;
+        }
+
+        .cart-item-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .cart-item-details {
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .cart-item-total {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 8px;
+            width: 100%;
+            transition: background 0.3s;
+        }
+
+        .remove-btn:hover {
+            background: #c0392b;
+        }
+
+        .cart-summary {
+            border-top: 2px solid #ddd;
+            padding-top: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .summary-row.discount {
+            color: #27ae60;
+        }
+
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .clear-cart-btn {
+            width: 100%;
+            padding: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        .clear-cart-btn:hover {
+            background: #c0392b;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-section {
+                position: static;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📦 Wholesale Product Store</h1>
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search products by name..."
+                    autocomplete="off"
+                >
+                <button onclick="searchProducts()">Search</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="products-section">
+                <div class="products-grid" id="productsGrid"></div>
+                <div class="no-results" id="noResults" style="display: none;">
+                    No products found matching your search.
+                </div>
+            </div>
+
+            <div class="cart-section">
+                <h2>Shopping Cart</h2>
+                <div class="cart-items" id="cartItems">
+                    <div class="cart-empty">Your cart is empty</div>
+                </div>
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal (before discount):</span>
+                        <span>₹<span id="subtotal">0.00</span></span>
+                    </div>
+                    <div class="summary-row discount">
+                        <span>Total Discount (30%):</span>
+                        <span>-₹<span id="totalDiscount">0.00</span></span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Final Total:</span>
+                        <span>₹<span id="finalTotal">0.00</span></span>
+                    </div>
+                </div>
+                <button class="clear-cart-btn" onclick="clearCart()">Clear Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Products imported from provided list (parsed)
+        const rawProductText = `AMCHUR POWDER 50 GM PCS 50
+BLACK PEPPER(BOX) 50GM BOX 78
+CHAAT MASALA 100GM PCS 85
+CHAAT MASALA 50GM PCS 44
+CHAT 100GM JAR PCS 90
+CHAT MASALA 10 GM BOX BOX 10
+CHAT MASALA 7 GM PCS 5
+CHATMASAL 12GM PCS 10
+CHHOLA MASALA 7GM PCS 5
+CHHOLE MASALA 100GM PCS 88
+CHHOLE MASALA 50GM PCS 45
+CHICKEN MASALA 7GMS PCS 5
+CHIKEN MASALA 100 gm JAR BOX 99
+CHIKEN MASALA 50 GM PCS 48
+CHIKEN MASALA BOX 10GM BOX 10
+CHILLFLAKES 30 PCS 79
+CHOLE 100 GM JAR BOX 97
+CORAINDER (POUCH) 10 GM PCS 5
+CORIANDER (POUCH) 100GM PCS 42
+CORIANDER (POUCH) 200GM PCS 84
+CORIANDER (POUCH) 500GM PCS 190
+CORIANDER POWDER [200]JAR PCS 90
+CORIANDER POWDER [500] JAR PCS 202
+CUMIN POWDER (BOX) 50GM BOX 53
+CUMIN POWDER(BOX) 50GM BOX 53
+DESI MEAT 50 GM BOX PCS 10
+DESI MEAT 50 GM BOX BOX 53
+DESI MEAT 50 GM BOX PCS 10
+DRY GINGER (BOX) 50GM BOX 47
+EGG CURRY 7GM BOX PCS 5
+GARAM 100 JAR PCS 106
+GARAM MASALA (200) JAR 60 PCS 204
+GARAM MASALA 10 GM BOX PCS 10
+GARAM MASALA 50 GM PCS 52
+GARAM MASALA 7 GMS PCS 5
+GINGER GARLIC PASTE 25 PCS 5
+GINGER GILRIC PASTE 200 PCS 50
+GINGER GIRLIC PEST 100 PCS 25
+HINGRAJ 100GM PCS 275
+HINGRAJ 25GM(240PC) PCS 74
+HINGRAJ 50GM PCS 143
+HINGRAJ POWDER (10) (JAR3 PCS 33
+JALJIRA POWDER 100GM PCS 66
+JALJIRA POWDER 50GM PCS 35
+JALJIRA POWDER 5GM PCS 2
+KADAI MIRCH POWDER 100GM BOX 120
+KASHMIRI CHILLY 10 GMS PCS 10
+KASHMIRI LAL (BOX) 50GM BOX 57
+KASHMIRI LAL 20GM PCS 25
+KASURI METHI 25GM PCS 30
+KITCHEN KING 100GM PCS 97
+KITCHEN KING 12 GMS PCS 90
+KITCHEN KING 50GM PCS 47
+MEAT MASALA (JAR) 200GM 60 PCS 191
+MEAT MASALA 100GM BOX 92
+MEAT MASALA 200GM ( 80 PCS) PCS 180
+MEAT MASALA 50GM PCS 48
+MEAT MASALA BOX 10 BOX 10
+MEAT MASALA P 12 GMS PCS 5
+MEAT MASALA100JAR BOX 99
+MEAT MASALA7GM PCS 5
+MILK MASALA 20GMS PCS 87
+MIXED HERB 12 PCS 79
+OREGANO 10 GM PCS 63.2
+PANIPURI MASALA 50GM PCS 40
+PASTA MASALA POUCH 10GM PCS 5
+PAV BHAJI MASALA 50 GM PCS 47
+PAVBHAJI 7 PCS 5
+SABJI BOX 10 GM BOX 10
+SABJI MASALA (200) JAR 60 PCS 150
+SABJI MASALA (BOX ) 100 GM BOX 72
+SABJI MASALA 200GM ( 80 PCS) PCS 140
+SABJI MASALA7 GM PCS 5
+SAFFRON 0.5GM PCS 210
+SAFFRON50MG PCS 210
+SAFFRON 50MG PCS 210
+SAHI BIRYANI 10 GM BOX BOX 10
+SAHI PANEER BOX 10 GM BOX BOX 10
+SAMBHAR 7GM PCS 5
+SAMBHAR MASALA 50GM PCS 42
+SHAHI BIRYANI 50GM PCS 83
+SHAHI BIRYANI POUCH 8GM PCS 10
+SHAHI PANEER BOX 50GM BOX 51
+SHAHI PANEER POUCH 12 GM PCS 10
+SUPER GARAM MASALA 1KG PCS 605
+SUPER GARAM MASALA 1KG PCS 605
+SUPER GARAM MASALA 200GM PCS 128
+SUPER SAMBHAR 100GM PCS 67
+SUPERGARAM 50GM PCS 32
+TAE MASALA 25GMS PCS 33
+TANDORI CHICKEN MASALA 50GM PCS 48
+TEZ MATAN MASALA 7GMS PCS 5
+TEZ MATAN MASALA POUCH 12 PCS 7
+TIKHALAL (POUCH) 100GM PCS 62
+TIKHALAL (POUCH) 200GM PCS 143
+TIKHALAL (POUCH) 500GM PCS 290
+TIKHALAL CHILLY POWDER 500GM JAR PCS 305
+TIKHALAL POUCH 50GM PCS 30
+TURMERIC (POUCH) 100GM PCS 46
+TURMERIC (POUCH) 200GM PCS 92
+TURMERIC (POUCH) 500GM PCS 220
+TURMERIC (POUCH) 50GM PCS 23
+TURMERIC (POUCH)10GM PCS 5
+TURMERIC POWDER [200] JAR PCS 102
+TURMERIC POWDER [500] JAR PCS 235
+WHITE PAPPER (POUCH) 100GM PCS 115`;
+
+        const products = parseProductsFromText(rawProductText);
+
+        function parseProductsFromText(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l && !/^name\b/i.test(l));
+
+            return lines.map((line, idx) => {
+                const parts = line.split(/\s+/);
+                const mrpRaw = parts[parts.length - 1] || '0';
+                const mrp = parseFloat(mrpRaw.replace(/[^0-9.]/g, '')) || 0;
+                const packRaw = parts[parts.length - 2] || '';
+                const rawPack = packRaw.replace(/[^a-zA-Z]/g, '').toUpperCase();
+                const name = parts.slice(0, parts.length - 2).join(' ');
+
+                // Try to extract weight in gm or kg from the name (e.g., '50 GM', '1KG')
+                const weightMatch = name.match(/(\d+(?:\.\d+)?)\s*(kg|KG|Kg|g|G|gm|GM)/i);
+                let weight = 0;
+                if (weightMatch) {
+                    const val = parseFloat(weightMatch[1]);
+                    const unit = weightMatch[2].toLowerCase();
+                    weight = unit.startsWith('kg') ? val * 1000 : val;
+                }
+
+                // Normalize category to exactly one of: hanger, pouch, box, jar
+                let category;
+                if (rawPack.includes('BOX')) category = 'box';
+                else if (rawPack.includes('POUCH')) category = 'pouch';
+                else if (rawPack.includes('JAR')) category = 'jar';
+                else if (rawPack.includes('HANGER')) category = 'hanger';
+                else if (rawPack.includes('PCS') || rawPack === '' || rawPack === 'PC') category = 'pouch';
+                else category = 'pouch';
+
+                // Default piecesPerCase per category
+                const defaultPiecesPerCategory = { pouch: 1, box: 10, jar: 10, hanger: 1200 };
+                let piecesPerCase = defaultPiecesPerCategory[category] || 1;
+
+                // Special rule: if weight is 5g, 7g or 10g and original pack wasn't BOX, treat as hanger
+                const smallWeight = Math.round(weight);
+                if ((smallWeight === 5 || smallWeight === 7 || smallWeight === 10) && category !== 'box') {
+                    category = 'hanger';
+                    piecesPerCase = defaultPiecesPerCategory['hanger'];
+                }
+
+                return {
+                    id: idx + 1,
+                    name,
+                    mrp,
+                    weight, // grams
+                    piecesPerCase,
+                    category
+                };
+            });
+        }
+
+        let cart = [];
+        let filteredProducts = [...products];
+
+        // Initialize the page
+        function init() {
+            renderProducts();
+            setupEventListeners();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchProducts();
+                }
+            });
+        }
+
+
+
+        // Render products
+        function renderProducts() {
+            const productsGrid = document.getElementById('productsGrid');
+            const noResults = document.getElementById('noResults');
+
+            if (filteredProducts.length === 0) {
+                productsGrid.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            noResults.style.display = 'none';
+            productsGrid.innerHTML = filteredProducts.map(product => `
+                <div class="product-card">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-details">
+                        <div class="detail-item">
+                            <span class="detail-label">MRP:</span>
+                            <span>₹${product.mrp}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Weight:</span>
+                            <span>${product.weight >= 1000 ? (product.weight/1000)+ 'kg' : product.weight + 'g'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Category:</span>
+                            <span>${product.category}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Pieces/Case:</span>
+                            <span>${product.piecesPerCase}</span>
+                        </div>
+                    </div>
+
+                    <div class="price-section">
+                        <div class="mrp-display">Price per unit: ₹${product.mrp}</div>
+                        <div class="case-total">Case Total: ₹${(product.mrp * product.piecesPerCase).toFixed(2)}</div>
+                        <div class="discount-info">After 30% discount: ₹${((product.mrp * product.piecesPerCase) * 0.7).toFixed(2)}</div>
+                    </div>
+
+                    <div class="quantity-section">
+                        <label for="cases-${product.id}">Cases:</label>
+                        <input 
+                            type="number" 
+                            id="cases-${product.id}" 
+                            min="0" 
+                            value="1"
+                        >
+
+                        <label for="pieces-${product.id}">Pieces:</label>
+                        <input 
+                            type="number" 
+                            id="pieces-${product.id}" 
+                            min="0" 
+                            value="0"
+                        >
+                    </div>
+
+                    <button class="add-btn" onclick="addToCart(${product.id})">Add to Cart</button>
+                </div>
+            `).join('');
+        }
+
+        // Search products
+        function searchProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                filteredProducts = [...products];
+            } else {
+                filteredProducts = products.filter(product =>
+                    product.name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderProducts();
+        }
+
+        // Add to cart
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const casesQuantity = parseInt(document.getElementById(`cases-${productId}`).value) || 0;
+            const piecesQuantity = parseInt(document.getElementById(`pieces-${productId}`).value) || 0;
+
+            if ((casesQuantity <= 0 && piecesQuantity <= 0) || isNaN(casesQuantity) || isNaN(piecesQuantity)) {
+                alert('Please enter a valid quantity for cases or pieces');
+                return;
+            }
+
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.cases = (existingItem.cases || 0) + (casesQuantity || 0);
+                existingItem.pieces = (existingItem.pieces || 0) + (piecesQuantity || 0);
+            } else {
+                cart.push({
+                    ...product,
+                    cases: casesQuantity || 0,
+                    pieces: piecesQuantity || 0
+                });
+            }
+
+            updateCart();
+            document.getElementById(`cases-${productId}`).value = 1;
+            document.getElementById(`pieces-${productId}`).value = 0;
+        }
+
+        // Update cart display and calculations
+        function updateCart() {
+            const cartItemsDiv = document.getElementById('cartItems');
+            const subtotalSpan = document.getElementById('subtotal');
+            const discountSpan = document.getElementById('totalDiscount');
+            const finalTotalSpan = document.getElementById('finalTotal');
+
+            if (cart.length === 0) {
+                cartItemsDiv.innerHTML = '<div class="cart-empty">Your cart is empty</div>';
+                subtotalSpan.textContent = '0.00';
+                discountSpan.textContent = '0.00';
+                finalTotalSpan.textContent = '0.00';
+                return;
+            }
+
+            // Calculate totals
+            let subtotal = 0;
+            let totalDiscount = 0;
+
+            cartItemsDiv.innerHTML = cart.map((item, index) => {
+                const caseTotal = item.mrp * item.piecesPerCase; // per case
+                const discountedCaseTotal = caseTotal * 0.7; // per case after discount
+                const perPiecePrice = item.mrp; // per piece before discount
+                const perPieceDiscounted = perPiecePrice * 0.7;
+
+                const casesQty = item.cases || 0;
+                const piecesQty = item.pieces || 0;
+
+                const preDiscount = (caseTotal * casesQty) + (perPiecePrice * piecesQty);
+                const discount = (caseTotal * 0.3 * casesQty) + (perPiecePrice * 0.3 * piecesQty);
+                const itemTotal = (discountedCaseTotal * casesQty) + (perPieceDiscounted * piecesQty);
+
+                subtotal += preDiscount;
+                totalDiscount += discount;
+
+                let qtyDetails = '';
+                if (casesQty) qtyDetails += `Cases: ${casesQty} × ₹${discountedCaseTotal.toFixed(2)} (30% off)<br>`;
+                if (piecesQty) qtyDetails += `Pieces: ${piecesQty} × ₹${perPieceDiscounted.toFixed(2)} (30% off)<br>`;
+
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-details">
+                            <div>MRP per piece: ₹${item.mrp}</div>
+                            <div>Pieces/Case: ${item.piecesPerCase}</div>
+                            <div>${qtyDetails}</div>
+                        </div>
+                        <div class="cart-item-total">Total: ₹${itemTotal.toFixed(2)}</div>
+                        <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
+                    </div>
+                `;
+            }).join('');
+
+            const finalTotal = subtotal - totalDiscount;
+
+            subtotalSpan.textContent = subtotal.toFixed(2);
+            discountSpan.textContent = totalDiscount.toFixed(2);
+            finalTotalSpan.textContent = finalTotal.toFixed(2);
+        }
+
+        // Remove from cart
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCart();
+        }
+
+        // Clear cart
+        function clearCart() {
+            if (cart.length === 0) {
+                alert('Cart is already empty');
+                return;
+            }
+
+            if (confirm('Are you sure you want to clear the entire cart?')) {
+                cart = [];
+                updateCart();
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
