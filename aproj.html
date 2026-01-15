@@ -39,12 +39,13 @@
 
         .search-box {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
+            align-items: center;
         }
 
-        .search-box input {
-            flex: 1;
+        .search-box input, .search-box select {
             padding: 12px;
             border: 2px solid #ddd;
             border-radius: 5px;
@@ -52,9 +53,18 @@
             transition: border-color 0.3s;
         }
 
-        .search-box input:focus {
+        .search-box input:focus, .search-box select:focus {
             outline: none;
             border-color: #667eea;
+        }
+
+        .search-box .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box .filter-input {
+            min-width: 120px;
         }
 
         .search-box button {
@@ -343,8 +353,30 @@
                 <input 
                     type="text" 
                     id="searchInput" 
+                    class="search-input"
                     placeholder="Search products by name..."
                     autocomplete="off"
+                >
+                <select id="categoryFilter" class="filter-input">
+                    <option value="">All Categories</option>
+                    <option value="pouch">Pouch</option>
+                    <option value="box">Box</option>
+                    <option value="jar">Jar</option>
+                    <option value="hanger">Hanger</option>
+                </select>
+                <input 
+                    type="number" 
+                    id="weightExact" 
+                    class="filter-input"
+                    placeholder="Exact Weight (g)"
+                    min="0"
+                >
+                <input 
+                    type="number" 
+                    id="mrpUnder" 
+                    class="filter-input"
+                    placeholder="Under MRP (₹)"
+                    min="0"
                 >
                 <button onclick="searchProducts()">Search</button>
             </div>
@@ -420,8 +452,8 @@ GARAM MASALA 10 GM BOX PCS 10
 GARAM MASALA 50 GM PCS 52
 GARAM MASALA 7 GMS PCS 5
 GINGER GARLIC PASTE 25 PCS 5
-GINGER GILRIC PASTE 200 PCS 50
-GINGER GIRLIC PEST 100 PCS 25
+GINGER GARLIC PASTE 200 PCS 50
+GINGER GARLIC PEST 100 PCS 25
 HINGRAJ 100GM PCS 275
 HINGRAJ 25GM(240PC) PCS 74
 HINGRAJ 50GM PCS 143
@@ -560,6 +592,11 @@ WHITE PAPPER (POUCH) 100GM PCS 115`;
                     searchProducts();
                 }
             });
+            
+            // Add listeners for filter changes
+            document.getElementById('categoryFilter').addEventListener('change', searchProducts);
+            document.getElementById('weightExact').addEventListener('input', searchProducts);
+            document.getElementById('mrpUnder').addEventListener('input', searchProducts);
         }
 
 
@@ -630,14 +667,25 @@ WHITE PAPPER (POUCH) 100GM PCS 115`;
         // Search products
         function searchProducts() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const weightExact = parseFloat(document.getElementById('weightExact').value) || NaN;
+            const mrpUnder = parseFloat(document.getElementById('mrpUnder').value) || Infinity;
             
-            if (searchTerm === '') {
-                filteredProducts = [...products];
-            } else {
-                filteredProducts = products.filter(product =>
-                    product.name.toLowerCase().includes(searchTerm)
-                );
-            }
+            filteredProducts = products.filter(product => {
+                // Name search
+                const nameMatch = searchTerm === '' || product.name.toLowerCase().includes(searchTerm);
+                
+                // Category filter
+                const categoryMatch = categoryFilter === '' || product.category === categoryFilter;
+                
+                // Exact weight match (only if a value is entered)
+                const weightMatch = isNaN(weightExact) || product.weight === weightExact;
+                
+                // MRP under
+                const mrpMatch = product.mrp <= mrpUnder;
+                
+                return nameMatch && categoryMatch && weightMatch && mrpMatch;
+            });
 
             renderProducts();
         }
