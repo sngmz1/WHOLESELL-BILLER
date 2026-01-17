@@ -181,6 +181,13 @@ let filteredProducts = [...products];
 function init() {
     renderProducts();
     setupEventListeners();
+    updateCart(); // Initialize cart display
+
+    // Hide cart on mobile initially
+    if (window.innerWidth <= 768) {
+        const cartSection = document.querySelector('.cart-section');
+        if (cartSection) cartSection.classList.add('hidden');
+    }
 }
 
 // Setup event listeners
@@ -195,6 +202,22 @@ function setupEventListeners() {
     document.getElementById('categoryFilter').addEventListener('change', searchProducts);
     document.getElementById('weightExact').addEventListener('input', searchProducts);
     document.getElementById('mrpUnder').addEventListener('input', searchProducts);
+
+    // Handle window resize for cart visibility
+    window.addEventListener('resize', function() {
+        const toggleBtn = document.getElementById('cartToggleBtn');
+        const cartSection = document.querySelector('.cart-section');
+
+        if (window.innerWidth <= 768) {
+            if (cart.length > 0) {
+                toggleBtn.style.display = 'block';
+                cartSection.classList.add('hidden');
+            }
+        } else {
+            toggleBtn.style.display = 'none';
+            cartSection.classList.remove('hidden');
+        }
+    });
 }
 
 // Render products
@@ -302,7 +325,7 @@ function addToCart(productId) {
         existingItem.cases = (existingItem.cases || 0) + (casesQuantity || 0);
         existingItem.pieces = (existingItem.pieces || 0) + (piecesQuantity || 0);
     } else {
-        cart.push({
+        cart.unshift({
             ...product,
             cases: casesQuantity || 0,
             pieces: piecesQuantity || 0
@@ -326,46 +349,72 @@ function updateCart() {
         subtotalSpan.textContent = '0.00';
         discountSpan.textContent = '0.00';
         finalTotalSpan.textContent = '0.00';
+        const toggleBtn = document.getElementById('cartToggleBtn');
+        if (toggleBtn) toggleBtn.style.display = 'none';
         return;
     }
+
+    const toggleBtn = document.getElementById('cartToggleBtn');
+    if (toggleBtn) toggleBtn.style.display = window.innerWidth <= 768 ? 'block' : 'none';
 
     // Calculate totals
     let subtotal = 0;
     let totalDiscount = 0;
 
-    cartItemsDiv.innerHTML = cart.map((item, index) => {
-        const caseTotal = item.mrp * item.piecesPerCase; // per case
-        const discountedCaseTotal = caseTotal * 0.7; // per case after discount
-        const perPiecePrice = item.mrp; // per piece before discount
-        const perPieceDiscounted = perPiecePrice * 0.7;
+    cartItemsDiv.innerHTML = `
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Cat.</th>
+                    <th>MRP</th>
+                    <th>Wt.</th>
+                    <th>Qty</th>
+                    <th>Total MRP</th>
+                    <th>Disc.</th>
+                    <th>Final</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${cart.map((item, index) => {
+                    const caseTotal = item.mrp * item.piecesPerCase;
+                    const discountedCaseTotal = caseTotal * 0.7;
+                    const perPiecePrice = item.mrp;
+                    const perPieceDiscounted = perPiecePrice * 0.7;
 
-        const casesQty = item.cases || 0;
-        const piecesQty = item.pieces || 0;
+                    const casesQty = item.cases || 0;
+                    const piecesQty = item.pieces || 0;
 
-        const preDiscount = (caseTotal * casesQty) + (perPiecePrice * piecesQty);
-        const discount = (caseTotal * 0.3 * casesQty) + (perPiecePrice * 0.3 * piecesQty);
-        const itemTotal = (discountedCaseTotal * casesQty) + (perPieceDiscounted * piecesQty);
+                    const preDiscount = (caseTotal * casesQty) + (perPiecePrice * piecesQty);
+                    const discount = (caseTotal * 0.3 * casesQty) + (perPiecePrice * 0.3 * piecesQty);
+                    const itemTotal = (discountedCaseTotal * casesQty) + (perPieceDiscounted * piecesQty);
 
-        subtotal += preDiscount;
-        totalDiscount += discount;
+                    subtotal += preDiscount;
+                    totalDiscount += discount;
 
-        let qtyDetails = '';
-        if (casesQty) qtyDetails += `Cases: ${casesQty} × ₹${discountedCaseTotal.toFixed(2)} (30% off)<br>`;
-        if (piecesQty) qtyDetails += `Pieces: ${piecesQty} × ₹${perPieceDiscounted.toFixed(2)} (30% off)<br>`;
+                    const quantityText = [];
+                    if (casesQty > 0) quantityText.push(`${casesQty} Case${casesQty > 1 ? 's' : ''}`);
+                    if (piecesQty > 0) quantityText.push(`${piecesQty} Piece${piecesQty > 1 ? 's' : ''}`);
+                    const quantityDisplay = quantityText.join('<br>');
 
-        return `
-            <div class="cart-item">
-                <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-details">
-                    <div>MRP per piece: ₹${item.mrp}</div>
-                    <div>Pieces/Case: ${item.piecesPerCase}</div>
-                    <div>${qtyDetails}</div>
-                </div>
-                <div class="cart-item-total">Total: ₹${itemTotal.toFixed(2)}</div>
-                <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
-            </div>
-        `;
-    }).join('');
+                    return `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.category}</td>
+                            <td>₹${item.mrp}</td>
+                            <td>${item.weight >= 1000 ? (item.weight/1000) + 'kg' : item.weight + 'g'}</td>
+                            <td>${quantityDisplay}</td>
+                            <td>₹${preDiscount.toFixed(2)}</td>
+                            <td>₹${discount.toFixed(2)}</td>
+                            <td>₹${itemTotal.toFixed(2)}</td>
+                            <td><button class="remove-btn" onclick="removeFromCart(${index})">Remove</button></td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
 
     const finalTotal = subtotal - totalDiscount;
 
@@ -390,6 +439,17 @@ function clearCart() {
     if (confirm('Are you sure you want to clear the entire cart?')) {
         cart = [];
         updateCart();
+    }
+}
+
+// Toggle cart visibility on mobile
+function toggleCart() {
+    const cartSection = document.querySelector('.cart-section');
+    const toggleBtn = document.getElementById('cartToggleBtn');
+
+    if (window.innerWidth <= 768) {
+        cartSection.classList.toggle('hidden');
+        toggleBtn.textContent = cartSection.classList.contains('hidden') ? '🛒' : '✕';
     }
 }
 
