@@ -48,7 +48,7 @@ h1 {
 
 .search-box input:focus, .search-box select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #cad2f2;
 }
 
 .search-box .search-input {
@@ -62,7 +62,7 @@ h1 {
 
 .search-box button {
     padding: 12px 20px;
-    background: #667eea;
+    background: #0b1b63;
     color: white;
     border: none;
     border-radius: 5px;
@@ -72,7 +72,7 @@ h1 {
 }
 
 .search-box button:hover {
-    background: #5568d3;
+    background: #0b1b63;
 }
 
 .main-content {
@@ -435,41 +435,6 @@ h1 {
     background: #c0392b;
 }
 
-/* Header Buttons */
-.header-buttons {
-    position: absolute;
-    right: 20px;
-    top: 20px;
-    display: flex;
-    gap: 10px;
-}
-
-.history-btn, .add-product-btn {
-    padding: 10px 15px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
-}
-
-.add-product-btn {
-    background: #27ae60;
-}
-
-.history-btn:hover {
-    background: #5568d3;
-}
-
-.add-product-btn:hover {
-    background: #219a52;
-}
-
-header {
-    position: relative;
-}
 
 /* History Popup */
 .history-overlay {
@@ -844,4 +809,346 @@ header {
     .products-grid {
         grid-template-columns: 1fr;
     }
+}
+.menu-wrapper {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+}
+
+.menu-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: 55px;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 160px;
+}
+
+.menu-dropdown button {
+    padding: 12px 15px;
+    border: none;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.menu-dropdown button:hover {
+    background: #f2f2f2;
+}
+
+
+/* Filter Panel Styles */
+.filter-btn {
+    padding: 12px 16px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.filter-panel {
+    position: absolute;
+    right: 20px;
+    top: 90px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 15px;
+    width: 260px;
+    display: none;
+    z-index: 1500;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-actions button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.filter-actions button:first-child {
+    background: #667eea;
+    color: white;
+}
+
+.filter-actions button:last-child {
+    background: #e74c3c;
+    color: white;
+}
+/* Filter Panel Styles */
+.filter-btn {
+    padding: 12px 16px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.filter-panel {
+    position: absolute;
+    right: 20px;
+    top: 90px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 15px;
+    width: 260px;
+    display: none;
+    z-index: 1500;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-actions button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.filter-actions button:first-child {
+    background: #667eea;
+    color: white;
+}
+
+.filter-actions button:last-child {
+    background: #e74c3c;
+    color: white;
+}
+
+/* Clear Filters Button */
+.menu-wrapper {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3000; /* 👈 very important */
+}
+
+.menu-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    display: none;
+    flex-direction: column;
+    min-width: 160px;
+    z-index: 3001; /* 👈 dropdown above everything */
+}
+
+.menu-dropdown button {
+    padding: 12px 15px;
+    border: none;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.menu-dropdown button:hover {
+    background: #f2f2f2;
+}
+
+
+/* ===== FIXED 3 DOT MENU ===== */
+.menu-wrapper {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 5000;
+}
+
+.menu-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    display: none;
+    flex-direction: column;
+    min-width: 170px;
+    z-index: 5001;
+}
+
+.menu-dropdown button {
+    padding: 12px 16px;
+    border: none;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.menu-dropdown button:hover {
+    background: #f2f2f2;
+}
+
+/* ===== FILTER PANEL ===== */
+.filter-panel {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    padding: 15px;
+    width: 260px;
+    display: none;
+    z-index: 4000;
+}
+
+
+.store-title-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 18px 20px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+.store-title-card .emoji {
+    font-size: 34px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.store-title-card h1 {
+    font-size: 24px;
+    margin: 6px 0;
+}
+
+.store-title-card .badge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    letter-spacing: 1px;
+}
+
+/* Footer end for copyright */
+/* ===== APP FOOTER (VISIBLE FIX) ===== */
+/* ===== APP FOOTER (FORCED VISIBILITY) ===== */
+.app-footer {
+    position: relative;
+    width: 100%;
+    margin-top: 60px;
+    padding: 16px 10px;
+
+    background-color: #0f172a;   /* solid dark */
+    color: #ffffff;
+
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+
+    z-index: 10;
+}
+
+.app-footer a {
+    color: #38bdf8;              /* blue clickable link */
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.app-footer a:hover {
+    text-decoration: underline;
 }

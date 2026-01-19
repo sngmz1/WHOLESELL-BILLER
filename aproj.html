@@ -9,164 +9,83 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📦 Wholesale Product Store</h1>
-            <div class="header-buttons">
-                <button class="add-product-btn" onclick="openAddModal()">➕ Add Item</button>
-                <button class="history-btn" onclick="toggleHistory()">📋 Bill History</button>
-            </div>
-            <div class="search-box">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    class="search-input"
-                    placeholder="Search products by name..."
-                    autocomplete="off"
-                >
-                <select id="categoryFilter" class="filter-input">
-                    <option value="">All Categories</option>
-                    <option value="pouch">Pouch</option>
-                    <option value="box">Box</option>
-                    <option value="jar">Jar</option>
-                    <option value="hanger">Hanger</option>
-                </select>
-                <input 
-                    type="number" 
-                    id="weightExact" 
-                    class="filter-input"
-                    placeholder="Exact Weight (g)"
-                    min="0"
-                >
-                <input 
-                    type="number" 
-                    id="mrpUnder" 
-                    class="filter-input"
-                    placeholder="Under MRP (₹)"
-                    min="0"
-                >
-                <button onclick="searchProducts()">Search</button>
-            </div>
-        </header>
 
-        <div class="main-content">
-            <div class="products-section">
-                <div class="products-grid" id="productsGrid"></div>
-                <div class="no-results" id="noResults" style="display: none;">
-                    No products found matching your search.
-                </div>
-            </div>
+    <!-- STORE TITLE -->
+    <div class="store-title-card">
+        <span class="emoji">📦</span>
+        <h1>Wholesale Product Store</h1>
+        <span class="badge">BILLING SYSTEM</span>
+    </div>
 
+    <!-- MENU -->
+    <div class="menu-wrapper">
+        <button class="menu-btn" id="menuBtn">⋮</button>
+        <div class="menu-dropdown" id="menuDropdown">
+            <button id="addItemBtn">➕ Add Item</button>
+            <button id="historyBtn">📋 Bill History</button>
         </div>
     </div>
 
-    <!-- Cart Overlay -->
-    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <!-- HEADER (❗ WAS MISSING BEFORE) -->
+    <header>
+        <div class="search-box">
+            <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                placeholder="Search products by name..."
+                autocomplete="off"
+            >
 
-    <!-- Cart Popup -->
-    <div class="cart-section" id="cartSection">
-        <button class="cart-close-btn" onclick="toggleCart()">✕</button>
-        <h2>🛒 Shopping Cart</h2>
-        <div class="cart-items" id="cartItems">
-            <div class="cart-empty">Your cart is empty</div>
-        </div>
-        <div class="cart-summary">
-            <div class="summary-row">
-                <span>Subtotal (before discount):</span>
-                <span>₹<span id="subtotal">0.00</span></span>
-            </div>
-            <div class="summary-row discount">
-                <span>Total Discount (30%):</span>
-                <span>-₹<span id="totalDiscount">0.00</span></span>
-            </div>
-            <div class="summary-row total">
-                <span>Final Total:</span>
-                <span>₹<span id="finalTotal">0.00</span></span>
-            </div>
-        </div>
-        <div class="cart-actions">
-            <button class="export-btn" onclick="exportToExcel()">📊 Export Excel</button>
-            <button class="save-bill-btn" onclick="saveBill()">💾 Save Bill</button>
-            <button class="clear-cart-btn" onclick="clearCart()">🗑️ Clear</button>
-        </div>
-    </div>
+            <button class="filter-btn" onclick="toggleFilter()">🔽 Filters</button>
 
-    <!-- History Overlay -->
-    <div class="history-overlay" id="historyOverlay" onclick="toggleHistory()"></div>
-
-    <!-- History Popup -->
-    <div class="history-section" id="historySection">
-        <button class="cart-close-btn" onclick="toggleHistory()">✕</button>
-        <h2>📋 Bill History</h2>
-        <div class="history-list" id="historyList">
-            <div class="cart-empty">No bills saved yet</div>
-        </div>
-    </div>
-
-    <!-- Product Edit/Add Modal -->
-    <div class="modal-overlay" id="productModalOverlay" onclick="closeProductModal()"></div>
-    <div class="modal-section" id="productModal">
-        <button class="cart-close-btn" onclick="closeProductModal()">✕</button>
-        <h2 id="modalTitle">Edit Product</h2>
-        <form id="productForm" onsubmit="handleProductSubmit(event)">
-            <input type="hidden" id="editProductId">
-            
-            <div class="form-group">
-                <label for="editName">Product Name</label>
-                <input type="text" id="editName" required placeholder="Enter product name">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="editMrp">MRP (₹)</label>
-                    <input type="number" id="editMrp" required min="0" step="0.01">
-                </div>
-                <div class="form-group">
-                    <label for="editWeight">Weight (g)</label>
-                    <input type="number" id="editWeight" required min="0" step="0.01">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="editCategory">Category</label>
-                    <select id="editCategory" required>
+            <div class="filter-panel" id="filterPanel">
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="categoryFilter">
+                        <option value="">All</option>
                         <option value="pouch">Pouch</option>
                         <option value="box">Box</option>
                         <option value="jar">Jar</option>
                         <option value="hanger">Hanger</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="editPieces">Pieces/Case</label>
-                    <input type="number" id="editPieces" required min="1">
+
+                <div class="filter-group">
+                    <label>Exact Weight (g)</label>
+                    <input type="number" id="weightExact">
+                </div>
+
+                <div class="filter-group">
+                    <label>MRP Under (₹)</label>
+                    <input type="number" id="mrpUnder">
+                </div>
+
+                <div class="filter-actions">
+                    <button onclick="applyFilters()">Apply</button>
+                    <button onclick="clearFilters()">Clear</button>
                 </div>
             </div>
 
-            <div class="modal-actions">
-                <button type="button" class="delete-btn" id="deleteProductBtn" onclick="deleteCurrentProduct()" style="display: none;">Delete</button>
-                <button type="submit" class="save-btn">Save Product</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Bill Detail Modal -->
-    <div class="modal-overlay" id="billDetailOverlay" onclick="closeBillDetailModal()"></div>
-    <div class="modal-section large-modal" id="billDetailModal">
-        <button class="cart-close-btn" onclick="closeBillDetailModal()">✕</button>
-        <h2 id="billDetailTitle">Bill Details</h2>
-        <div id="billDetailContent"></div>
-        <div class="modal-actions">
-            <button class="export-btn" id="billDetailExportBtn">📊 Export Excel</button>
-            <button class="delete-btn" id="billDetailDeleteBtn">🗑️ Delete Bill</button>
+            <button onclick="searchProducts()">Search</button>
         </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="products-section">
+            <div class="products-grid" id="productsGrid"></div>
+            <div class="no-results" id="noResults" style="display:none;">
+                No products found matching your search.
+            </div>
+        </div>
+        
     </div>
 
-    <!-- Floating Cart Button -->
-    <button class="cart-toggle-btn" onclick="toggleCart()" id="cartToggleBtn">
-        🛒
-        <span class="cart-count" id="cartCount" style="display: none;">0</span>
-    </button>
+    <!-- FOOTER (NOW WILL SHOW 100%) -->
+    <footer class="app-footer">
+        <span id="copyrightText"></span>
+    </footer>
 
     <script src="aproj.js"></script>
 </body>

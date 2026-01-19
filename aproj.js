@@ -199,14 +199,42 @@ function init() {
     updateCart();
     renderHistory();
 }
+// debounce function
+function debounce(fn, delay = 400) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            fn(...args);
+        }, delay);
+    };
+}
+
+// search products with currentPage reset
+function searchProducts() {
+    currentPage = 1;
+
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    const weightExact = parseFloat(document.getElementById('weightExact').value);
+    const mrpUnder = parseFloat(document.getElementById('mrpUnder').value);
+
+    filteredProducts = products.filter(p => {
+        const nameOk = !searchTerm || p.name.toLowerCase().includes(searchTerm);
+        const catOk = !categoryFilter || p.category === categoryFilter;
+        const weightOk = !weightExact || p.weight === weightExact;
+        const mrpOk = !mrpUnder || p.mrp <= mrpUnder;
+        return nameOk && catOk && weightOk && mrpOk;
+    });
+
+    renderProducts();
+}
 
 // Setup event listeners
 function setupEventListeners() {
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            searchProducts();
-        }
-    });
+   const searchInput = document.getElementById('searchInput');
+const debouncedSearch = debounce(searchProducts, 400);
+searchInput.addEventListener('input', debouncedSearch);
 
     // Add listeners for filter changes
     document.getElementById('categoryFilter').addEventListener('change', searchProducts);
@@ -223,6 +251,8 @@ function setupEventListeners() {
         }
     });
 }
+let currentPage = 1;
+const ITEMS_PER_PAGE = 10;
 
 // Render products
 function renderProducts() {
@@ -236,9 +266,16 @@ function renderProducts() {
     }
 
     noResults.style.display = 'none';
-    productsGrid.innerHTML = filteredProducts.map(product => `
+
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+
+    const pageItems = filteredProducts.slice(start, end);
+
+    productsGrid.innerHTML = pageItems.map(product => `
         <div class="product-card">
             <div class="product-name">${product.name}</div>
+
             <div class="product-details">
                 <div class="detail-item">
                     <span class="detail-label">MRP:</span>
@@ -246,7 +283,7 @@ function renderProducts() {
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Weight:</span>
-                    <span>${product.weight >= 1000 ? (product.weight/1000)+ 'kg' : product.weight + 'g'}</span>
+                    <span>${product.weight >= 1000 ? (product.weight/1000) + 'kg' : product.weight + 'g'}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Category:</span>
@@ -260,59 +297,147 @@ function renderProducts() {
 
             <div class="price-section">
                 <div class="mrp-display">Price per unit: ₹${product.mrp}</div>
-                <div class="case-total">Case Total: ₹${(product.mrp * product.piecesPerCase).toFixed(2)}</div>
-                <div class="discount-info">After 30% discount: ₹${((product.mrp * product.piecesPerCase) * 0.7).toFixed(2)}</div>
+                <div class="case-total">
+                    Case Total: ₹${(product.mrp * product.piecesPerCase).toFixed(2)}
+                </div>
+                <div class="discount-info">
+                    After 30% discount:
+                    ₹${((product.mrp * product.piecesPerCase) * 0.7).toFixed(2)}
+                </div>
             </div>
 
             <div class="quantity-section">
-                <label for="cases-${product.id}">Cases:</label>
-                <input
-                    type="number"
-                    id="cases-${product.id}"
-                    min="0"
-                    value="1"
-                >
+                <label>Cases:</label>
+                <input type="number" id="cases-${product.id}" min="0" value="1">
 
-                <label for="pieces-${product.id}">Pieces:</label>
-                <input
-                    type="number"
-                    id="pieces-${product.id}"
-                    min="0"
-                    value="0"
-                >
+                <label>Pieces:</label>
+                <input type="number" id="pieces-${product.id}" min="0" value="0">
             </div>
 
-            <button class="add-btn" onclick="addToCart(${product.id})">Add to Cart</button>
-            <button class="edit-btn" onclick="openEditModal(${product.id})">Edit Details</button>
+            <button class="add-btn" onclick="addToCart(${product.id})">
+                Add to Cart
+            </button>
+
+            <button class="edit-btn" onclick="openEditModal(${product.id})">
+                Edit Details
+            </button>
         </div>
     `).join('');
+
+    renderPaginationControls();
 }
+
+//toggle menu
+
+    function toggleFilter() {
+    const panel = document.getElementById('filterPanel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+function closeFilterPanel() {
+    document.getElementById('filterPanel').style.display = 'none';
+}
+
+//for menu close on outside click
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('menuDropdown');
+    if (!menu) return;
+
+    if (
+        !e.target.closest('.menu-wrapper') &&
+        menu.style.display === 'flex'
+    ) {
+        menu.style.display = 'none';
+    }
+});
+
+
+
+// toggle filter panel
+function toggleFilter() {
+    const panel = document.getElementById('filterPanel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+// apply filters
+function applyFilters() {
+    currentPage = 1;
+    searchProducts();
+    closeFilterPanel(); 
+}
+// clear filters
+function clearFilters() {
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('weightExact').value = '';
+    document.getElementById('mrpUnder').value = '';
+
+    currentPage = 1;
+    searchProducts();
+    closeFilterPanel();
+}
+
+// Close filter panel when clicking outside
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('filterPanel');
+    if (!e.target.closest('.filter-panel') && !e.target.closest('.filter-btn')) {
+        panel.style.display = 'none';
+    }
+});
 
 // Search products
 function searchProducts() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    currentPage = 1;
+
+    const searchTerm = document
+        .getElementById('searchInput')
+        .value
+        .toLowerCase()
+        .trim();
+
     const categoryFilter = document.getElementById('categoryFilter').value;
-    const weightExact = parseFloat(document.getElementById('weightExact').value) || NaN;
-    const mrpUnder = parseFloat(document.getElementById('mrpUnder').value) || Infinity;
+    const weightExact = parseFloat(document.getElementById('weightExact').value);
+    const mrpUnder = parseFloat(document.getElementById('mrpUnder').value);
 
-    filteredProducts = products.filter(product => {
-        // Name search
-        const nameMatch = searchTerm === '' || product.name.toLowerCase().includes(searchTerm);
+    // 1️⃣ FILTER PRODUCTS
+    filteredProducts = products.filter(p => {
+        const name = p.name.toLowerCase();
 
-        // Category filter
-        const categoryMatch = categoryFilter === '' || product.category === categoryFilter;
-
-        // Exact weight match (only if a value is entered)
-        const weightMatch = isNaN(weightExact) || product.weight === weightExact;
-
-        // MRP under
-        const mrpMatch = product.mrp <= mrpUnder;
+        const nameMatch = !searchTerm || name.includes(searchTerm);
+        const categoryMatch = !categoryFilter || p.category === categoryFilter;
+        const weightMatch = !weightExact || p.weight === weightExact;
+        const mrpMatch = !mrpUnder || p.mrp <= mrpUnder;
 
         return nameMatch && categoryMatch && weightMatch && mrpMatch;
     });
 
+    // 2️⃣ PRIORITY SORT (MEAT > DESI MEAT)
+    if (searchTerm) {
+        const wordRegex = new RegExp(`\\b${searchTerm}\\b`, 'i');
+
+        filteredProducts.sort((a, b) => {
+            const aName = a.name.toLowerCase();
+            const bName = b.name.toLowerCase();
+
+            // Exact word match first
+            const aExact = wordRegex.test(aName);
+            const bExact = wordRegex.test(bName);
+
+            if (aExact && !bExact) return -1;
+            if (!aExact && bExact) return 1;
+
+            // Starts-with second priority
+            const aStarts = aName.startsWith(searchTerm);
+            const bStarts = bName.startsWith(searchTerm);
+
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+
+            // Shorter name wins
+            return aName.length - bName.length;
+        });
+    }
+
     renderProducts();
 }
+
 
 // Add to cart
 function addToCart(productId) {
@@ -1349,3 +1474,59 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
+
+// ===== 3 DOT MENU =====
+const menuBtn = document.getElementById('menuBtn');
+const menuDropdown = document.getElementById('menuDropdown');
+
+if (menuBtn) {
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menuDropdown.style.display =
+            menuDropdown.style.display === 'flex' ? 'none' : 'flex';
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.menu-wrapper')) {
+        if (menuDropdown) menuDropdown.style.display = 'none';
+    }
+});
+
+
+
+// ===== MENU BUTTON ACTIONS FIX =====
+const addItemBtn = document.getElementById('addItemBtn');
+const historyBtn = document.getElementById('historyBtn');
+
+if (addItemBtn) {
+    addItemBtn.addEventListener('click', () => {
+        openAddModal();      // existing function
+        menuDropdown.style.display = 'none';
+    });
+}
+
+if (historyBtn) {
+    historyBtn.addEventListener('click', () => {
+        toggleHistory();     // existing function
+        menuDropdown.style.display = 'none';
+    });
+}
+
+
+// footer copyright year update
+// ===== FOOTER COPYRIGHT =====
+// ===== FOOTER COPYRIGHT (CLICKABLE) =====
+(function () {
+    const el = document.getElementById('copyrightText');
+    if (!el) return;
+
+    const year = new Date().getFullYear();
+    el.innerHTML = `
+        © ${year} All Rights Reserved |
+        Built & Maintained by
+        <a href="https://github.com/sngmz1" target="_blank" rel="noopener noreferrer">
+            GitHub – sngmz1
+        </a>
+    `;
+})();
