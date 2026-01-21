@@ -1125,26 +1125,44 @@ h1 {
 }
 
 /* Footer end for copyright */
-/* ===== APP FOOTER (VISIBLE FIX) ===== */
 /* ===== APP FOOTER (FORCED VISIBILITY) ===== */
+/* ===== PREMIUM APP FOOTER ===== */
+/* ===== STATIC PREMIUM FOOTER ===== */
 .app-footer {
-    position: relative;
-    width: 100%;
-    margin-top: 60px;
-    padding: 16px 10px;
+    margin: 60px auto 20px auto;   /* page ke end me spacing */
+    width: fit-content;
 
-    background-color: #0f172a;   /* solid dark */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 14px 22px;
+
+    background: rgba(15, 23, 42, 0.95);
     color: #ffffff;
 
-    text-align: center;
     font-size: 14px;
     font-weight: 500;
 
-    z-index: 10;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.3);
+
+    text-align: center;
+
+    transition: 
+        transform 0.35s ease,
+        box-shadow 0.35s ease;
 }
 
+/* Hover animation only */
+.app-footer:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.45);
+}
+
+/* Footer link */
 .app-footer a {
-    color: #38bdf8;              /* blue clickable link */
+    color: #38bdf8;
     text-decoration: none;
     font-weight: 600;
 }
@@ -1152,3 +1170,105 @@ h1 {
 .app-footer a:hover {
     text-decoration: underline;
 }
+
+/* Version badge */
+.footer-version {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+
+    background: rgba(255,255,255,0.15);
+    border-radius: 999px;
+    letter-spacing: 0.6px;
+}
+
+/* GitHub icon spacing */
+.footer-github {
+    font-size: 16px;
+    margin-right: 4px;
+}
+
+/* ===== MOBILE CART QTY FIX ===== */
+@media (max-width: 768px) {
+
+    /* Make table scrollable instead of squeezing */
+    .cart-section {
+        width: 96%;
+        padding: 15px;
+    }
+
+    .cart-table {
+        font-size: 11px;
+    }
+
+    @media (max-width: 768px) {
+
+    .qty-row {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .qty-label {
+        font-size: 9px;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .qty-input {
+        width: 100%;
+        max-width: 48px;
+    }
+}
+
+}
+
+
+/* ===== FOOTER (CURVED + CLEAN) ===== */
+.app-footer {
+    position: relative;
+    margin: 20px auto 16px;
+    padding: 12px 16px;
+
+    max-width: 92%;
+    width: fit-content;
+
+    background: #f6f7f9;
+    color: #444;
+
+    border-radius: 14px;   /* 🔥 CURVED EDGES */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    font-size: 12px;
+    text-align: center;
+}
+
+/* Footer link */
+.app-footer a {
+    color: #0077cc;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.app-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Version text */
+.footer-version {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+/* Mobile optimization */
+@media (max-width: 600px) {
+    .app-footer {
+        font-size: 11px;
+        padding: 10px 14px;
+        border-radius: 16px;
+    }
+}
+

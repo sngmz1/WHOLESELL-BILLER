@@ -182,16 +182,6 @@ function parseProductsFromText(text) {
         };
     });
 }
-
-let cart = JSON.parse(localStorage.getItem('currentCart')) || [];
-let filteredProducts = [...products];
-let billHistory = JSON.parse(localStorage.getItem('billHistory')) || [];
-
-// Save cart to localStorage
-function saveCartToStorage() {
-    localStorage.setItem('currentCart', JSON.stringify(cart));
-}
-
 // Initialize the page
 function init() {
     renderProducts();
@@ -199,6 +189,26 @@ function init() {
     updateCart();
     renderHistory();
 }
+// Bill history functions
+function getBillHistory() {
+    return JSON.parse(localStorage.getItem('billHistory')) || [];
+}
+
+function setBillHistory(data) {
+    localStorage.setItem('billHistory', JSON.stringify(data));
+}
+
+
+let cart = JSON.parse(localStorage.getItem('currentCart')) || [];
+let filteredProducts = [...products];
+
+
+// Save cart to localStorage
+function saveCartToStorage() {
+    localStorage.setItem('currentCart', JSON.stringify(cart));
+}
+
+
 // debounce function
 function debounce(fn, delay = 400) {
     let timer;
@@ -210,25 +220,7 @@ function debounce(fn, delay = 400) {
     };
 }
 
-// search products with currentPage reset
-function searchProducts() {
-    currentPage = 1;
 
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-    const categoryFilter = document.getElementById('categoryFilter').value;
-    const weightExact = parseFloat(document.getElementById('weightExact').value);
-    const mrpUnder = parseFloat(document.getElementById('mrpUnder').value);
-
-    filteredProducts = products.filter(p => {
-        const nameOk = !searchTerm || p.name.toLowerCase().includes(searchTerm);
-        const catOk = !categoryFilter || p.category === categoryFilter;
-        const weightOk = !weightExact || p.weight === weightExact;
-        const mrpOk = !mrpUnder || p.mrp <= mrpUnder;
-        return nameOk && catOk && weightOk && mrpOk;
-    });
-
-    renderProducts();
-}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -396,7 +388,7 @@ function searchProducts() {
     const weightExact = parseFloat(document.getElementById('weightExact').value);
     const mrpUnder = parseFloat(document.getElementById('mrpUnder').value);
 
-    // 1️⃣ FILTER PRODUCTS
+    // 1️⃣ FILTER PRODUCTS BASED ON CRITERIA
     filteredProducts = products.filter(p => {
         const name = p.name.toLowerCase();
 
@@ -610,26 +602,20 @@ function clearCart() {
     }
 }
 
-// Toggle cart visibility
-function toggleCart() {
-    const cartSection = document.getElementById('cartSection');
-    const cartOverlay = document.getElementById('cartOverlay');
 
-    cartSection.classList.toggle('visible');
-    cartOverlay.classList.toggle('visible');
-}
 
 // Save current cart as a bill
 function saveBill() {
     if (cart.length === 0) {
-        alert('Cart is empty! Add items before saving a bill.');
+        alert('Cart is empty!');
         return;
     }
 
+    const history = getBillHistory();
+
     const subtotal = cart.reduce((sum, item) => {
-        const caseTotal = item.mrp * item.piecesPerCase;
-        const perPiecePrice = item.mrp;
-        return sum + (caseTotal * (item.cases || 0)) + (perPiecePrice * (item.pieces || 0));
+        return sum + (item.mrp * item.piecesPerCase * (item.cases || 0))
+                   + (item.mrp * (item.pieces || 0));
     }, 0);
 
     const discount = subtotal * 0.3;
@@ -637,37 +623,31 @@ function saveBill() {
 
     const bill = {
         id: Date.now(),
-        billNumber: 'BILL-' + String(billHistory.length + 1).padStart(4, '0'),
+        billNumber: 'BILL-' + String(history.length + 1).padStart(4, '0'),
         date: new Date().toLocaleString(),
-        items: cart.map(item => ({
-            name: item.name,
-            category: item.category,
-            mrp: item.mrp,
-            weight: item.weight,
-            cases: item.cases || 0,
-            pieces: item.pieces || 0,
-            piecesPerCase: item.piecesPerCase
-        })),
+        items: [...cart],
         subtotal: subtotal.toFixed(2),
         discount: discount.toFixed(2),
         finalTotal: finalTotal.toFixed(2)
     };
 
-    billHistory.unshift(bill);
-    localStorage.setItem('billHistory', JSON.stringify(billHistory));
-    renderHistory();
+    history.unshift(bill);
+    setBillHistory(history);
 
-    alert(`Bill saved! Bill Number: ${bill.billNumber}\nTotal: ₹${bill.finalTotal}`);
-
-    // Clear cart after saving
     cart = [];
-    updateCart();
     saveCartToStorage();
-    toggleCart();
+    updateCart();
+
+    renderHistory();   // ✅ NOW SAFE
+
+    alert(`Bill saved: ${bill.billNumber}`);
 }
+
 
 // Export cart to Excel with proper formatting (A6 size with colors and borders)
 async function exportToExcel() {
+    let billHistory = JSON.parse(localStorage.getItem('billHistory')) || [];
+
     if (cart.length === 0) {
         alert('Cart is empty! Add items before exporting.');
         return;
@@ -955,42 +935,47 @@ async function exportToExcel() {
 // Render bill history
 function renderHistory() {
     const historyList = document.getElementById('historyList');
+    const history = getBillHistory();
 
-    if (billHistory.length === 0) {
+    if (history.length === 0) {
         historyList.innerHTML = '<div class="cart-empty">No bills saved yet</div>';
         return;
     }
 
-    historyList.innerHTML = billHistory.map((bill, index) => `
-        <div class="bill-card">
-            <div class="bill-header">
-                <span class="bill-number">${bill.billNumber}</span>
-                <span class="bill-date">${bill.date}</span>
+    historyList.innerHTML =
+        history.map((bill, index) => `
+            <div class="bill-card">
+                <div class="bill-header">
+                    <span class="bill-number">${bill.billNumber}</span>
+                    <span class="bill-date">${bill.date}</span>
+                </div>
+
+                <div class="bill-items">
+                    ${bill.items.map(item => `
+                        <div class="bill-item-row">
+                            <span>${item.name}</span>
+                            <span>
+                                ${(item.cases || 0) > 0 ? item.cases + 'C ' : ''}
+                                ${(item.pieces || 0) > 0 ? item.pieces + 'P' : ''}
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="bill-totals">
+                    <span>Total</span>
+                    <span class="bill-total-amount">₹${bill.finalTotal}</span>
+                </div>
+
+                <div class="bill-actions">
+                    <button onclick="viewBill(${index})">View</button>
+                    <button onclick="deleteBill(${index})">Delete</button>
+                </div>
             </div>
-            <div class="bill-items">
-                ${bill.items.map(item => {
-                    const qty = [];
-                    if (item.cases > 0) qty.push(`${item.cases}C`);
-                    if (item.pieces > 0) qty.push(`${item.pieces}P`);
-                    return `<div class="bill-item-row">
-                        <span>${item.name} (${item.category.charAt(0).toUpperCase()})</span>
-                        <span>${qty.join('+')}</span>
-                    </div>`;
-                }).join('')}
-            </div>
-            <div class="bill-totals">
-                <span>Items: ${bill.items.length}</span>
-                <span class="bill-total-amount">₹${bill.finalTotal}</span>
-            </div>
-            <div class="bill-actions">
-                <button class="view-bill-btn" onclick="viewBill(${index})">View Details</button>
-                <button class="delete-bill-btn" onclick="deleteBill(${index})">Delete</button>
-            </div>
-        </div>
-    `).join('') + `
-        <button class="clear-history-btn" onclick="clearHistory()">Clear All History</button>
-    `;
+        `).join('');
 }
+
+
 
 // View bill details
 function viewBill(index) {
@@ -1515,18 +1500,73 @@ if (historyBtn) {
 
 
 // footer copyright year update
-// ===== FOOTER COPYRIGHT =====
-// ===== FOOTER COPYRIGHT (CLICKABLE) =====
+/* ===== FOOTER COPYRIGHT + ICON ===== */
+/* ===== FOOTER COPYRIGHT (STATIC) ===== */
 (function () {
     const el = document.getElementById('copyrightText');
     if (!el) return;
 
     const year = new Date().getFullYear();
     el.innerHTML = `
+        <span class="footer-github"></span>
         © ${year} All Rights Reserved |
-        Built & Maintained by
         <a href="https://github.com/sngmz1" target="_blank" rel="noopener noreferrer">
             GitHub – sngmz1
         </a>
     `;
 })();
+
+// Toggle cart visibility
+/* ===== CART TOGGLE (FINAL & SAFE) ===== */
+function toggleCart() {
+    const cart = document.getElementById('cartSection');
+    const overlay = document.getElementById('cartOverlay');
+
+    if (!cart || !overlay) {
+        console.error('Cart elements not found');
+        return;
+    }
+
+    cart.classList.toggle('visible');
+    overlay.classList.toggle('visible');
+}
+
+
+// ZOOM OFF
+/* ===== PREVENT ZOOM (DESKTOP + MOBILE SAFETY) ===== */
+
+// Disable CTRL + / - / 0 zoom
+window.addEventListener('keydown', function (e) {
+    if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')
+    ) {
+        e.preventDefault();
+    }
+});
+
+// Disable mouse wheel zoom (Ctrl + Scroll)
+window.addEventListener(
+    'wheel',
+    function (e) {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    },
+    { passive: false }
+);
+
+// Disable double tap zoom (extra safety)
+let lastTouchEnd = 0;
+document.addEventListener(
+    'touchend',
+    function (e) {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    },
+    false
+);
+
