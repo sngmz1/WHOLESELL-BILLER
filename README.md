@@ -137,7 +137,9 @@ User accounts for multiple shops
 
 GST / Tax support
 
+
 Mobile-first UI enhancement
+
 ------------------------------------------------
 📂 Project Structure (Simple)
 WHOLESELL-BILLER/
