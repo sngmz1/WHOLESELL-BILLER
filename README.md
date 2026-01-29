@@ -14,11 +14,11 @@ Speed ⚡
 Simplicity 🧠
 
 Practical real-world billing needs 🧾
-
+------------------------------------------------
 🎯 Problem It Solves
 
 Most wholesalers face these issues:
-
+------------------------------------------------
 Manual billing takes time
 
 Maintaining bill history is difficult
@@ -47,12 +47,15 @@ JavaScript – Logic, calculations, and interactions
 
 Git & GitHub – Version control and project management
 
+------------------------------------------------------------
 ⚙️ How the Application Works (Step-by-Step)
+
 🔹 Step 1: Open the Application
 
 User opens the billing web page in a browser
 
 No login or setup required
+
 
 🔹 Step 2: Enter Product Details
 
@@ -65,6 +68,7 @@ Quantity
 Price per unit
 
 Each entry is handled dynamically using JavaScript
+
 
 🔹 Step 3: Automatic Calculation
 
@@ -80,11 +84,13 @@ Final payable amount
 
 ✅ This removes manual calculation errors
 
+
 🔹 Step 4: Bill Generation
 
 All entered items are displayed in a structured bill format
 
 User can review the bill before finalizing
+
 
 🔹 Step 5: Bill History (Project Focus)
 
@@ -99,6 +105,7 @@ Online storage
 Server database
 
 Cloud backup
+
 
 🔹 Step 6: Reuse & Continue Billing
 
@@ -122,8 +129,6 @@ Smooth workflow for daily wholesale billing
 
 📈 Future Improvements
 
-Online database integration
-
 Permanent bill history storage
 
 PDF bill export
@@ -133,7 +138,7 @@ User accounts for multiple shops
 GST / Tax support
 
 Mobile-first UI enhancement
-
+------------------------------------------------
 📂 Project Structure (Simple)
 WHOLESELL-BILLER/
 │
@@ -141,6 +146,7 @@ WHOLESELL-BILLER/
 ├── style.css      → Design & layout
 ├── script.js      → Billing logic
 └── README.md      → Project documentation
+------------------------------------------------
 
 🚀 Why This Project Matters
 
