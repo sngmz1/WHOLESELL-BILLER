@@ -1,4 +1,16 @@
-// Products imported from provided list (parsed)
+/**
+ * WHOLESALE STORE APPLICATION - MAIN JAVASCRIPT
+ *
+ * This file contains all the functionality for the Wholesale Store web application,
+ * including product management, cart operations, bill generation, and Excel export.
+ */
+
+/**
+ * RAW PRODUCT DATA
+ * - Contains the initial product list in text format
+ * - Format: "PRODUCT_NAME WEIGHT PACK_TYPE PRICE"
+ * - Used to populate the product database on first load
+ */
 const rawProductText = `AMCHUR POWDER 50 GM PCS 50
 BLACK PEPPER(BOX) 50GM BOX 78
 CHAAT MASALA 100GM PCS 85
@@ -106,165 +118,218 @@ TURMERIC POWDER [200] JAR PCS 102
 TURMERIC POWDER [500] JAR PCS 235
 WHITE PAPPER (POUCH) 100GM PCS 115`;
 
-let products = JSON.parse(localStorage.getItem('products')) || [];
+/**
+ * PRODUCT DATA MANAGEMENT
+ * - Handles loading, parsing, and storing product data
+ */
 
+/**
+ * Load products from localStorage or initialize empty array
+ * @function loadProducts
+ * @returns {Array} Array of product objects
+ */
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+/**
+ * Initialize products if empty - parse raw text and save to storage
+ * @function initializeProducts
+ * @description Checks if products array is empty and initializes with parsed data
+ */
 if (products.length === 0) {
-    products = parseProductsFromText(rawProductText);
-    saveProductsToStorage();
+  products = parseProductsFromText(rawProductText);
+  saveProductsToStorage();
 }
 
+/**
+ * Save products array to localStorage
+ * @function saveProductsToStorage
+ * @description Persists the current products array to browser's localStorage
+ */
 function saveProductsToStorage() {
-    localStorage.setItem('products', JSON.stringify(products));
+  localStorage.setItem("products", JSON.stringify(products));
 }
 
+/**
+ * Parse raw product text into structured product objects
+ * @function parseProductsFromText
+ * @param {string} text - Raw product text with lines in format "NAME WEIGHT PACK PRICE"
+ * @returns {Array} Array of parsed product objects
+ * @description Converts raw text data into structured product objects with id, name, mrp, weight, piecesPerCase, and category
+ */
 function parseProductsFromText(text) {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l && !/^name\b/i.test(l));
+  // Split text into lines, trim whitespace, and filter out empty lines
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !/^name\b/i.test(l));
 
-    return lines.map((line, idx) => {
-        // Improved parsing: find the last number as MRP, the word before it as pack, rest as name
-        const parts = line.split(/\s+/);
-        let mrp = 0;
-        let packRaw = '';
-        let nameParts = [];
+  // Process each line into a product object
+  return lines.map((line, idx) => {
+    // Split line into parts and initialize variables
+    const parts = line.split(/\s+/);
+    let mrp = 0;
+    let packRaw = "";
+    let nameParts = [];
 
-        // Find the MRP (last number in the line)
-        for (let i = parts.length - 1; i >= 0; i--) {
-            const num = parseFloat(parts[i].replace(/[^0-9.]/g, ''));
-            if (!isNaN(num) && num > 0) {
-                mrp = num;
-                // The pack is likely the word before MRP
-                if (i > 0) {
-                    packRaw = parts[i - 1].replace(/[^a-zA-Z]/g, '').toUpperCase();
-                }
-                nameParts = parts.slice(0, i - 1);
-                break;
-            }
+    // Find MRP (last number in line) and determine packaging type
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const num = parseFloat(parts[i].replace(/[^0-9.]/g, ""));
+      if (!isNaN(num) && num > 0) {
+        mrp = num;
+        if (i > 0) {
+          packRaw = parts[i - 1].replace(/[^a-zA-Z]/g, "").toUpperCase();
         }
+        nameParts = parts.slice(0, i - 1);
+        break;
+      }
+    }
 
-        const name = nameParts.join(' ');
+    const name = nameParts.join(" ");
 
-        // Try to extract weight in gm or kg from the name
-        const weightMatch = name.match(/(\d+(?:\.\d+)?)\s*(kg|KG|Kg|g|G|gm|GM)/i);
-        let weight = 0;
-        if (weightMatch) {
-            const val = parseFloat(weightMatch[1]);
-            const unit = weightMatch[2].toLowerCase();
-            weight = unit.startsWith('kg') ? val * 1000 : val;
-        }
+    // Extract weight information from product name
+    const weightMatch = name.match(/(\d+(?:\.\d+)?)\s*(kg|KG|Kg|g|G|gm|GM)/i);
+    let weight = 0;
+    if (weightMatch) {
+      const val = parseFloat(weightMatch[1]);
+      const unit = weightMatch[2].toLowerCase();
+      weight = unit.startsWith("kg") ? val * 1000 : val; // Convert kg to grams
+    }
 
-        // Normalize category to exactly one of: hanger, pouch, box, jar
-        let category;
-        if (packRaw.includes('BOX')) category = 'box';
-        else if (packRaw.includes('POUCH')) category = 'pouch';
-        else if (packRaw.includes('JAR')) category = 'jar';
-        else if (packRaw.includes('HANGER')) category = 'hanger';
-        else if (packRaw.includes('PCS') || packRaw === '' || packRaw === 'PC') category = 'pouch';
-        else category = 'pouch';
+    // Determine product category based on packaging type
+    let category;
+    if (packRaw.includes("BOX")) category = "box";
+    else if (packRaw.includes("POUCH")) category = "pouch";
+    else if (packRaw.includes("JAR")) category = "jar";
+    else if (packRaw.includes("HANGER")) category = "hanger";
+    else if (packRaw.includes("PCS") || packRaw === "" || packRaw === "PC")
+      category = "pouch";
+    else category = "pouch";
 
-        // Default piecesPerCase per category
-        const defaultPiecesPerCategory = { pouch: 1, box: 10, jar: 10, hanger: 1200 };
-        let piecesPerCase = defaultPiecesPerCategory[category] || 1;
+    // Set default pieces per case based on category
+    const defaultPiecesPerCategory = {
+      pouch: 1,
+      box: 10,
+      jar: 10,
+      hanger: 1200,
+    };
+    let piecesPerCase = defaultPiecesPerCategory[category] || 1;
 
-        // Special rule: if weight is 5g, 7g or 10g and original pack wasn't BOX, treat as hanger
-        const smallWeight = Math.round(weight);
-        if ((smallWeight === 5 || smallWeight === 7 || smallWeight === 10) && category !== 'box') {
-            category = 'hanger';
-            piecesPerCase = defaultPiecesPerCategory['hanger'];
-        }
+    // Special rule for small weight products (5g, 7g, 10g) - treat as hangers unless box
+    const smallWeight = Math.round(weight);
+    if (
+      (smallWeight === 5 || smallWeight === 7 || smallWeight === 10) &&
+      category !== "box"
+    ) {
+      category = "hanger";
+      piecesPerCase = defaultPiecesPerCategory["hanger"];
+    }
 
-        return {
-            id: idx + 1,
-            name,
-            mrp,
-            weight, // grams
-            piecesPerCase,
-            category
-        };
-    });
+    // Return structured product object
+    return {
+      id: idx + 1, // Unique product ID
+      name, // Product name
+      mrp, // Maximum Retail Price
+      weight, // Weight in grams
+      piecesPerCase, // Number of pieces per case
+      category, // Product category (pouch, box, jar, hanger)
+    };
+  });
 }
 // Initialize the page
 function init() {
-    renderProducts();
-    setupEventListeners();
-    updateCart();
-    renderHistory();
+  renderProducts();
+  setupEventListeners();
+  updateCart();
+  renderHistory();
 }
 // Bill history functions
 function getBillHistory() {
-    return JSON.parse(localStorage.getItem('billHistory')) || [];
+  return JSON.parse(localStorage.getItem("billHistory")) || [];
 }
 
 function setBillHistory(data) {
-    localStorage.setItem('billHistory', JSON.stringify(data));
+  localStorage.setItem("billHistory", JSON.stringify(data));
 }
 
-
-let cart = JSON.parse(localStorage.getItem('currentCart')) || [];
+let cart = JSON.parse(localStorage.getItem("currentCart")) || [];
 let filteredProducts = [...products];
-
 
 // Save cart to localStorage
 function saveCartToStorage() {
-    localStorage.setItem('currentCart', JSON.stringify(cart));
+  localStorage.setItem("currentCart", JSON.stringify(cart));
 }
-
 
 // debounce function
 function debounce(fn, delay = 400) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            fn(...args);
-        }, delay);
-    };
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
 }
 
-
+function updatePiecesIcon(productId) {
+  const input = document.getElementById(`pieces-${productId}`);
+  const icon = document.getElementById(`pieces-icon-${productId}`);
+  const value = parseInt(input.value) || 0;
+  if (value > 0 && value <= 10) {
+    icon.innerHTML = Array.from({ length: value }, (_, i) => i + 1).join(" - ");
+  } else {
+    icon.innerHTML = "";
+  }
+}
 
 // Setup event listeners
 function setupEventListeners() {
-   const searchInput = document.getElementById('searchInput');
-const debouncedSearch = debounce(searchProducts, 400);
-searchInput.addEventListener('input', debouncedSearch);
+  const searchInput = document.getElementById("navbarSearchInput");
+  const debouncedSearch = debounce(searchProducts, 400);
+  searchInput.addEventListener("input", debouncedSearch);
 
-    // Add listeners for filter changes
-    document.getElementById('categoryFilter').addEventListener('change', searchProducts);
-    document.getElementById('weightExact').addEventListener('input', searchProducts);
-    document.getElementById('mrpUnder').addEventListener('input', searchProducts);
+  // Add listeners for filter changes
+  document
+    .getElementById("categoryFilter")
+    .addEventListener("change", searchProducts);
+  document
+    .getElementById("weightExact")
+    .addEventListener("input", searchProducts);
+  document.getElementById("mrpUnder").addEventListener("input", searchProducts);
 
-    // Close cart on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const cartSection = document.getElementById('cartSection');
-            if (cartSection.classList.contains('visible')) {
-                toggleCart();
-            }
-        }
-    });
+  // Close cart on Escape key
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      const cartSection = document.getElementById("cartSection");
+      if (cartSection.classList.contains("visible")) {
+        toggleCart();
+      }
+    }
+  });
 }
 let currentPage = 1;
 const ITEMS_PER_PAGE = 10;
 
 // Render products
 function renderProducts() {
-    const productsGrid = document.getElementById('productsGrid');
-    const noResults = document.getElementById('noResults');
+  const productsGrid = document.getElementById("productsGrid");
+  const noResults = document.getElementById("noResults");
 
-    if (filteredProducts.length === 0) {
-        productsGrid.innerHTML = '';
-        noResults.style.display = 'block';
-        return;
-    }
+  if (filteredProducts.length === 0) {
+    productsGrid.innerHTML = "";
+    noResults.style.display = "block";
+    return;
+  }
 
-    noResults.style.display = 'none';
+  noResults.style.display = "none";
 
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
 
-    const pageItems = filteredProducts.slice(start, end);
+  const pageItems = filteredProducts.slice(start, end);
 
-    productsGrid.innerHTML = pageItems.map(product => `
+  productsGrid.innerHTML = pageItems
+    .map(
+      (product) => `
         <div class="product-card">
             <div class="product-name">${product.name}</div>
 
@@ -275,7 +340,7 @@ function renderProducts() {
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Weight:</span>
-                    <span>${product.weight >= 1000 ? (product.weight/1000) + 'kg' : product.weight + 'g'}</span>
+                    <span>${product.weight >= 1000 ? product.weight / 1000 + "kg" : product.weight + "g"}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Category:</span>
@@ -294,7 +359,7 @@ function renderProducts() {
                 </div>
                 <div class="discount-info">
                     After 30% discount:
-                    ₹${((product.mrp * product.piecesPerCase) * 0.7).toFixed(2)}
+                    ₹${(product.mrp * product.piecesPerCase * 0.7).toFixed(2)}
                 </div>
             </div>
 
@@ -303,7 +368,8 @@ function renderProducts() {
                 <input type="number" id="cases-${product.id}" min="0" value="1">
 
                 <label>Pieces:</label>
-                <input type="number" id="pieces-${product.id}" min="0" value="0">
+                <input type="number" id="pieces-${product.id}" min="0" value="0" onchange="updatePiecesIcon(${product.id})">
+                <span id="pieces-icon-${product.id}" class="pieces-icon"></span>
             </div>
 
             <button class="add-btn" onclick="addToCart(${product.id})">
@@ -314,184 +380,215 @@ function renderProducts() {
                 Edit Details
             </button>
         </div>
-    `).join('');
+    `,
+    )
+    .join("");
 
-    renderPaginationControls();
+  renderPaginationControls();
 }
 
-//toggle menu
-
-    function toggleFilter() {
-    const panel = document.getElementById('filterPanel');
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-}
 function closeFilterPanel() {
-    document.getElementById('filterPanel').style.display = 'none';
+  document.getElementById("filterPanel").style.display = "none";
 }
 
 //for menu close on outside click
-document.addEventListener('click', (e) => {
-    const menu = document.getElementById('menuDropdown');
-    if (!menu) return;
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("menuDropdown");
+  if (!menu) return;
 
-    if (
-        !e.target.closest('.menu-wrapper') &&
-        menu.style.display === 'flex'
-    ) {
-        menu.style.display = 'none';
-    }
+  if (!e.target.closest(".menu-wrapper") && menu.style.display === "flex") {
+    menu.style.display = "none";
+  }
 });
 
-
-
-// toggle filter panel
-function toggleFilter() {
-    const panel = document.getElementById('filterPanel');
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-}
 // apply filters
 function applyFilters() {
-    currentPage = 1;
-    searchProducts();
-    closeFilterPanel(); 
+  currentPage = 1;
+  searchProducts();
+  closeFilterPanel();
 }
 // clear filters
 function clearFilters() {
-    document.getElementById('categoryFilter').value = '';
-    document.getElementById('weightExact').value = '';
-    document.getElementById('mrpUnder').value = '';
+  document.getElementById("categoryFilter").value = "";
+  document.getElementById("weightExact").value = "";
+  document.getElementById("mrpUnder").value = "";
 
-    currentPage = 1;
-    searchProducts();
-    closeFilterPanel();
+  currentPage = 1;
+  searchProducts();
+  closeFilterPanel();
 }
 
 // Close filter panel when clicking outside
-document.addEventListener('click', (e) => {
-    const panel = document.getElementById('filterPanel');
-    if (!e.target.closest('.filter-panel') && !e.target.closest('.filter-btn')) {
-        panel.style.display = 'none';
-    }
+document.addEventListener("click", (e) => {
+  const panel = document.getElementById("filterPanel");
+  if (
+    panel &&
+    panel.style.display === "block" &&
+    !e.target.closest("#filterPanel") &&
+    !e.target.closest("#filterBtn")
+  ) {
+    panel.style.display = "none";
+  }
 });
 
 // Search products
-function searchProducts() {
-    currentPage = 1;
-
-    const searchTerm = document
-        .getElementById('searchInput')
-        .value
-        .toLowerCase()
-        .trim();
-
-    const categoryFilter = document.getElementById('categoryFilter').value;
-    const weightExact = parseFloat(document.getElementById('weightExact').value);
-    const mrpUnder = parseFloat(document.getElementById('mrpUnder').value);
-
-    // 1️⃣ FILTER PRODUCTS BASED ON CRITERIA
-    filteredProducts = products.filter(p => {
-        const name = p.name.toLowerCase();
-
-        const nameMatch = !searchTerm || name.includes(searchTerm);
-        const categoryMatch = !categoryFilter || p.category === categoryFilter;
-        const weightMatch = !weightExact || p.weight === weightExact;
-        const mrpMatch = !mrpUnder || p.mrp <= mrpUnder;
-
-        return nameMatch && categoryMatch && weightMatch && mrpMatch;
-    });
-
-    // 2️⃣ PRIORITY SORT (MEAT > DESI MEAT)
-    if (searchTerm) {
-        const wordRegex = new RegExp(`\\b${searchTerm}\\b`, 'i');
-
-        filteredProducts.sort((a, b) => {
-            const aName = a.name.toLowerCase();
-            const bName = b.name.toLowerCase();
-
-            // Exact word match first
-            const aExact = wordRegex.test(aName);
-            const bExact = wordRegex.test(bName);
-
-            if (aExact && !bExact) return -1;
-            if (!aExact && bExact) return 1;
-
-            // Starts-with second priority
-            const aStarts = aName.startsWith(searchTerm);
-            const bStarts = bName.startsWith(searchTerm);
-
-            if (aStarts && !bStarts) return -1;
-            if (!aStarts && bStarts) return 1;
-
-            // Shorter name wins
-            return aName.length - bName.length;
-        });
-    }
-
-    renderProducts();
+function navbarSearch() {
+  searchProducts();
 }
 
+function toggleFilter() {
+  const filterPanel = document.getElementById("filterPanel");
+  if (filterPanel) {
+    const currentDisplay = filterPanel.style.display;
+    filterPanel.style.display = currentDisplay === "block" ? "none" : "block";
+  }
+}
+
+function toggleCart() {
+  const cartSection = document.getElementById("cartSection");
+  const overlay = document.getElementById("cartOverlay");
+  if (cartSection && overlay) {
+    cartSection.classList.toggle("visible");
+    overlay.classList.toggle("visible");
+  }
+}
+
+function toggleMenu() {
+  const menuDropdown = document.getElementById("menuDropdown");
+  if (menuDropdown) {
+    if (menuDropdown.style.display === "block") {
+      menuDropdown.style.display = "none";
+    } else {
+      menuDropdown.style.display = "block";
+    }
+  }
+}
+
+// Search products
+function searchProducts() {
+  currentPage = 1;
+
+  const searchTerm = document
+    .getElementById("navbarSearchInput")
+    .value.toLowerCase()
+    .trim();
+
+  const categoryFilter = document.getElementById("categoryFilter").value;
+  const weightExact = parseFloat(document.getElementById("weightExact").value);
+  const mrpUnder = parseFloat(document.getElementById("mrpUnder").value);
+
+  // 1️⃣ FILTER PRODUCTS BASED ON CRITERIA
+  filteredProducts = products.filter((p) => {
+    const name = p.name.toLowerCase();
+
+    const nameMatch = !searchTerm || name.includes(searchTerm);
+    const categoryMatch = !categoryFilter || p.category === categoryFilter;
+    const weightMatch = !weightExact || p.weight === weightExact;
+    const mrpMatch = !mrpUnder || p.mrp <= mrpUnder;
+
+    return nameMatch && categoryMatch && weightMatch && mrpMatch;
+  });
+
+  // 2️⃣ PRIORITY SORT (MEAT > DESI MEAT)
+  if (searchTerm) {
+    const wordRegex = new RegExp(`\\b${searchTerm}\\b`, "i");
+
+    filteredProducts.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+
+      // Exact word match first
+      const aExact = wordRegex.test(aName);
+      const bExact = wordRegex.test(bName);
+
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+
+      // Starts-with second priority
+      const aStarts = aName.startsWith(searchTerm);
+      const bStarts = bName.startsWith(searchTerm);
+
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+
+      // Shorter name wins
+      return aName.length - bName.length;
+    });
+  }
+
+  renderProducts();
+}
 
 // Add to cart
 function addToCart(productId) {
-    const product = products.find(p => p.id === productId);
-    const casesQuantity = parseInt(document.getElementById(`cases-${productId}`).value) || 0;
-    const piecesQuantity = parseInt(document.getElementById(`pieces-${productId}`).value) || 0;
+  const product = products.find((p) => p.id === productId);
+  const casesQuantity =
+    parseInt(document.getElementById(`cases-${productId}`).value) || 0;
+  const piecesQuantity =
+    parseInt(document.getElementById(`pieces-${productId}`).value) || 0;
 
-    if ((casesQuantity <= 0 && piecesQuantity <= 0) || isNaN(casesQuantity) || isNaN(piecesQuantity)) {
-        alert('Please enter a valid quantity for cases or pieces');
-        return;
-    }
+  if (
+    (casesQuantity <= 0 && piecesQuantity <= 0) ||
+    isNaN(casesQuantity) ||
+    isNaN(piecesQuantity)
+  ) {
+    alert("Please enter a valid quantity for cases or pieces");
+    return;
+  }
 
-    const existingItem = cart.find(item => item.id === productId);
-    if (existingItem) {
-        existingItem.cases = (existingItem.cases || 0) + (casesQuantity || 0);
-        existingItem.pieces = (existingItem.pieces || 0) + (piecesQuantity || 0);
-    } else {
-        cart.unshift({
-            ...product,
-            cases: casesQuantity || 0,
-            pieces: piecesQuantity || 0
-        });
-    }
+  const existingItem = cart.find((item) => item.id === productId);
+  if (existingItem) {
+    existingItem.cases = (existingItem.cases || 0) + (casesQuantity || 0);
+    existingItem.pieces = (existingItem.pieces || 0) + (piecesQuantity || 0);
+  } else {
+    cart.unshift({
+      ...product,
+      cases: casesQuantity || 0,
+      pieces: piecesQuantity || 0,
+    });
+  }
 
-    updateCart();
-    saveCartToStorage();
-    document.getElementById(`cases-${productId}`).value = 1;
-    document.getElementById(`pieces-${productId}`).value = 0;
+  updateCart();
+  saveCartToStorage();
+  document.getElementById(`cases-${productId}`).value = 1;
+  document.getElementById(`pieces-${productId}`).value = 0;
 }
 
 // Update cart display and calculations
 function updateCart() {
-    const cartItemsDiv = document.getElementById('cartItems');
-    const subtotalSpan = document.getElementById('subtotal');
-    const discountSpan = document.getElementById('totalDiscount');
-    const finalTotalSpan = document.getElementById('finalTotal');
-    const cartCount = document.getElementById('cartCount');
+  const cartItemsDiv = document.getElementById("cartItems");
+  const subtotalSpan = document.getElementById("subtotal");
+  const discountSpan = document.getElementById("totalDiscount");
+  const finalTotalSpan = document.getElementById("finalTotal");
+  const cartCount = document.getElementById("cartCount");
 
-    // Update cart count badge
-    const totalItems = cart.reduce((sum, item) => sum + (item.cases || 0) + (item.pieces || 0), 0);
-    if (cartCount) {
-        if (totalItems > 0) {
-            cartCount.style.display = 'flex';
-            cartCount.textContent = totalItems > 99 ? '99+' : totalItems;
-        } else {
-            cartCount.style.display = 'none';
-        }
+  // Update cart count badge
+  const totalItems = cart.reduce(
+    (sum, item) => sum + (item.cases || 0) + (item.pieces || 0),
+    0,
+  );
+  if (cartCount) {
+    if (totalItems > 0) {
+      cartCount.style.display = "flex";
+      cartCount.textContent = totalItems > 99 ? "99+" : totalItems;
+    } else {
+      cartCount.style.display = "none";
     }
+  }
 
-    if (cart.length === 0) {
-        cartItemsDiv.innerHTML = '<div class="cart-empty">Your cart is empty</div>';
-        subtotalSpan.textContent = '0.00';
-        discountSpan.textContent = '0.00';
-        finalTotalSpan.textContent = '0.00';
-        return;
-    }
+  if (cart.length === 0) {
+    cartItemsDiv.innerHTML = '<div class="cart-empty">Your cart is empty</div>';
+    subtotalSpan.textContent = "0.00";
+    discountSpan.textContent = "0.00";
+    finalTotalSpan.textContent = "0.00";
+    return;
+  }
 
-    // Calculate totals
-    let subtotal = 0;
-    let totalDiscount = 0;
+  // Calculate totals
+  let subtotal = 0;
+  let totalDiscount = 0;
 
-    cartItemsDiv.innerHTML = `
+  cartItemsDiv.innerHTML = `
         <table class="cart-table">
             <thead>
                 <tr>
@@ -507,7 +604,8 @@ function updateCart() {
                 </tr>
             </thead>
             <tbody>
-                ${cart.map((item, index) => {
+                ${cart
+                  .map((item, index) => {
                     const caseTotal = item.mrp * item.piecesPerCase;
                     const discountedCaseTotal = caseTotal * 0.7;
                     const perPiecePrice = item.mrp;
@@ -516,9 +614,14 @@ function updateCart() {
                     const casesQty = item.cases || 0;
                     const piecesQty = item.pieces || 0;
 
-                    const preDiscount = (caseTotal * casesQty) + (perPiecePrice * piecesQty);
-                    const discount = (caseTotal * 0.3 * casesQty) + (perPiecePrice * 0.3 * piecesQty);
-                    const itemTotal = (discountedCaseTotal * casesQty) + (perPieceDiscounted * piecesQty);
+                    const preDiscount =
+                      caseTotal * casesQty + perPiecePrice * piecesQty;
+                    const discount =
+                      caseTotal * 0.3 * casesQty +
+                      perPiecePrice * 0.3 * piecesQty;
+                    const itemTotal =
+                      discountedCaseTotal * casesQty +
+                      perPieceDiscounted * piecesQty;
 
                     subtotal += preDiscount;
                     totalDiscount += discount;
@@ -530,7 +633,7 @@ function updateCart() {
                             <td>${item.name}</td>
                             <td>${categoryAbbr}</td>
                             <td>₹${item.mrp}</td>
-                            <td>${item.weight >= 1000 ? (item.weight/1000) + 'kg' : item.weight + 'g'}</td>
+                            <td>${item.weight >= 1000 ? item.weight / 1000 + "kg" : item.weight + "g"}</td>
                             <td class="qty-cell">
                                 <div class="qty-row">
                                     <span class="qty-label">C:</span>
@@ -547,403 +650,445 @@ function updateCart() {
                             <td><button class="remove-btn" onclick="removeFromCart(${index})">✕</button></td>
                         </tr>
                     `;
-                }).join('')}
+                  })
+                  .join("")}
             </tbody>
         </table>
     `;
 
-    const finalTotal = subtotal - totalDiscount;
+  const finalTotal = subtotal - totalDiscount;
 
-    subtotalSpan.textContent = subtotal.toFixed(2);
-    discountSpan.textContent = totalDiscount.toFixed(2);
-    finalTotalSpan.textContent = finalTotal.toFixed(2);
+  subtotalSpan.textContent = subtotal.toFixed(2);
+  discountSpan.textContent = totalDiscount.toFixed(2);
+  finalTotalSpan.textContent = finalTotal.toFixed(2);
 }
 
 // Set quantity in cart
 function setQty(index, type, value) {
-    const item = cart[index];
-    if (!item) return;
+  const item = cart[index];
+  if (!item) return;
 
-    const qty = Math.max(0, parseInt(value) || 0);
+  const qty = Math.max(0, parseInt(value) || 0);
 
-    if (type === 'cases') {
-        item.cases = qty;
-    } else if (type === 'pieces') {
-        item.pieces = qty;
-    }
+  if (type === "cases") {
+    item.cases = qty;
+  } else if (type === "pieces") {
+    item.pieces = qty;
+  }
 
-    // Remove item if both cases and pieces are 0
-    if ((item.cases || 0) === 0 && (item.pieces || 0) === 0) {
-        cart.splice(index, 1);
-    }
+  // Remove item if both cases and pieces are 0
+  if ((item.cases || 0) === 0 && (item.pieces || 0) === 0) {
+    cart.splice(index, 1);
+  }
 
-    updateCart();
-    saveCartToStorage();
+  updateCart();
+  saveCartToStorage();
 }
 
 // Remove from cart
 function removeFromCart(index) {
-    cart.splice(index, 1);
-    updateCart();
-    saveCartToStorage();
+  cart.splice(index, 1);
+  updateCart();
+  saveCartToStorage();
 }
 
 // Clear cart
 function clearCart() {
-    if (cart.length === 0) {
-        alert('Cart is already empty');
-        return;
-    }
+  if (cart.length === 0) {
+    alert("Cart is already empty");
+    return;
+  }
 
-    if (confirm('Are you sure you want to clear the entire cart?')) {
-        cart = [];
-        updateCart();
-        saveCartToStorage();
-    }
+  if (confirm("Are you sure you want to clear the entire cart?")) {
+    cart = [];
+    updateCart();
+    saveCartToStorage();
+  }
 }
-
-
 
 // Save current cart as a bill
 function saveBill() {
-    if (cart.length === 0) {
-        alert('Cart is empty!');
-        return;
-    }
+  if (cart.length === 0) {
+    alert("Cart is empty!");
+    return;
+  }
 
-    const history = getBillHistory();
+  const history = getBillHistory();
 
-    const subtotal = cart.reduce((sum, item) => {
-        return sum + (item.mrp * item.piecesPerCase * (item.cases || 0))
-                   + (item.mrp * (item.pieces || 0));
-    }, 0);
+  const subtotal = cart.reduce((sum, item) => {
+    return (
+      sum +
+      item.mrp * item.piecesPerCase * (item.cases || 0) +
+      item.mrp * (item.pieces || 0)
+    );
+  }, 0);
 
-    const discount = subtotal * 0.3;
-    const finalTotal = subtotal - discount;
+  const discount = subtotal * 0.3;
+  const finalTotal = subtotal - discount;
 
-    const bill = {
-        id: Date.now(),
-        billNumber: 'BILL-' + String(history.length + 1).padStart(4, '0'),
-        date: new Date().toLocaleString(),
-        items: [...cart],
-        subtotal: subtotal.toFixed(2),
-        discount: discount.toFixed(2),
-        finalTotal: finalTotal.toFixed(2)
-    };
+  const bill = {
+    id: Date.now(),
+    billNumber: "BILL-" + String(history.length + 1).padStart(4, "0"),
+    date: new Date().toLocaleString(),
+    items: [...cart],
+    subtotal: subtotal.toFixed(2),
+    discount: discount.toFixed(2),
+    finalTotal: finalTotal.toFixed(2),
+  };
 
-    history.unshift(bill);
-    setBillHistory(history);
+  history.unshift(bill);
+  setBillHistory(history);
 
-    cart = [];
-    saveCartToStorage();
-    updateCart();
+  cart = [];
+  saveCartToStorage();
+  updateCart();
 
-    renderHistory();   // ✅ NOW SAFE
+  renderHistory(); // ✅ NOW SAFE
 
-    alert(`Bill saved: ${bill.billNumber}`);
+  alert(`Bill saved: ${bill.billNumber}`);
 }
-
 
 // Export cart to Excel with proper formatting (A6 size with colors and borders)
 async function exportToExcel() {
-    let billHistory = JSON.parse(localStorage.getItem('billHistory')) || [];
+  let billHistory = JSON.parse(localStorage.getItem("billHistory")) || [];
 
-    if (cart.length === 0) {
-        alert('Cart is empty! Add items before exporting.');
-        return;
-    }
+  if (cart.length === 0) {
+    alert("Cart is empty! Add items before exporting.");
+    return;
+  }
 
-    // Calculate totals for saving
-    const subtotalVal = cart.reduce((sum, item) => {
-        const caseTotal = item.mrp * item.piecesPerCase;
-        const perPiecePrice = item.mrp;
-        return sum + (caseTotal * (item.cases || 0)) + (perPiecePrice * (item.pieces || 0));
-    }, 0);
-    const discountVal = subtotalVal * 0.3;
-    const finalTotalVal = subtotalVal - discountVal;
+  // Calculate totals for saving
+  const subtotalVal = cart.reduce((sum, item) => {
+    const caseTotal = item.mrp * item.piecesPerCase;
+    const perPiecePrice = item.mrp;
+    return (
+      sum + caseTotal * (item.cases || 0) + perPiecePrice * (item.pieces || 0)
+    );
+  }, 0);
+  const discountVal = subtotalVal * 0.3;
+  const finalTotalVal = subtotalVal - discountVal;
 
-    // Create and save bill
-    const bill = {
-        id: Date.now(),
-        billNumber: 'BILL-' + String(billHistory.length + 1).padStart(4, '0'),
-        date: new Date().toLocaleString(),
-        items: cart.map(item => ({
-            name: item.name,
-            category: item.category,
-            mrp: item.mrp,
-            weight: item.weight,
-            cases: item.cases || 0,
-            pieces: item.pieces || 0,
-            piecesPerCase: item.piecesPerCase
-        })),
-        subtotal: subtotalVal.toFixed(2),
-        discount: discountVal.toFixed(2),
-        finalTotal: finalTotalVal.toFixed(2)
+  // Create and save bill
+  const bill = {
+    id: Date.now(),
+    billNumber: "BILL-" + String(billHistory.length + 1).padStart(4, "0"),
+    date: new Date().toLocaleString(),
+    items: cart.map((item) => ({
+      name: item.name,
+      category: item.category,
+      mrp: item.mrp,
+      weight: item.weight,
+      cases: item.cases || 0,
+      pieces: item.pieces || 0,
+      piecesPerCase: item.piecesPerCase,
+    })),
+    subtotal: subtotalVal.toFixed(2),
+    discount: discountVal.toFixed(2),
+    finalTotal: finalTotalVal.toFixed(2),
+  };
+
+  billHistory.unshift(bill);
+  localStorage.setItem("billHistory", JSON.stringify(billHistory));
+  renderHistory();
+
+  const billNumber = bill.billNumber;
+  const date = new Date().toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const time = new Date().toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  // Calculate totals
+  let subtotal = 0;
+  let totalDiscount = 0;
+  let totalCases = 0;
+  let totalPieces = 0;
+
+  const billItems = cart.map((item, index) => {
+    const casesQty = item.cases || 0;
+    const piecesQty = item.pieces || 0;
+    const caseTotal = item.mrp * item.piecesPerCase;
+    const perPiecePrice = item.mrp;
+
+    const preDiscount = caseTotal * casesQty + perPiecePrice * piecesQty;
+    const discount = preDiscount * 0.3;
+    const itemTotal = preDiscount - discount;
+
+    subtotal += preDiscount;
+    totalDiscount += discount;
+    totalCases += casesQty;
+    totalPieces += piecesQty;
+
+    const weight =
+      item.weight >= 1000 ? item.weight / 1000 + "kg" : item.weight + "g";
+
+    return {
+      sr: index + 1,
+      name:
+        item.name.length > 18 ? item.name.substring(0, 16) + ".." : item.name,
+      cat: item.category.charAt(0).toUpperCase(),
+      cases: casesQty,
+      pcs: piecesQty,
+      rate: item.mrp,
+      amt: itemTotal,
     };
+  });
 
-    billHistory.unshift(bill);
-    localStorage.setItem('billHistory', JSON.stringify(billHistory));
-    renderHistory();
+  const finalTotal = subtotal - totalDiscount;
 
-    const billNumber = bill.billNumber;
-    const date = new Date().toLocaleDateString('en-IN', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: 'numeric'
-    });
-    const time = new Date().toLocaleTimeString('en-IN', { 
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+  // Create workbook with ExcelJS
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Bill", {
+    pageSetup: {
+      paperSize: 11, // A5 (closest to A6)
+      orientation: "portrait",
+      fitToPage: true,
+      margins: {
+        left: 0.2,
+        right: 0.2,
+        top: 0.2,
+        bottom: 0.2,
+        header: 0,
+        footer: 0,
+      },
+    },
+  });
 
-    // Calculate totals
-    let subtotal = 0;
-    let totalDiscount = 0;
-    let totalCases = 0;
-    let totalPieces = 0;
+  // Column widths for A6 (compact)
+  sheet.columns = [
+    { width: 3 }, // Sr
+    { width: 18 }, // Product
+    { width: 3 }, // Cat
+    { width: 4 }, // C
+    { width: 4 }, // P
+    { width: 6 }, // Rate
+    { width: 8 }, // Amt
+  ];
 
-    const billItems = cart.map((item, index) => {
-        const casesQty = item.cases || 0;
-        const piecesQty = item.pieces || 0;
-        const caseTotal = item.mrp * item.piecesPerCase;
-        const perPiecePrice = item.mrp;
-        
-        const preDiscount = (caseTotal * casesQty) + (perPiecePrice * piecesQty);
-        const discount = preDiscount * 0.3;
-        const itemTotal = preDiscount - discount;
+  // Styles
+  const headerStyle = {
+    font: { bold: true, size: 14, color: { argb: "FFFFFFFF" } },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF667EEA" } },
+    alignment: { horizontal: "center", vertical: "middle" },
+  };
 
-        subtotal += preDiscount;
-        totalDiscount += discount;
-        totalCases += casesQty;
-        totalPieces += piecesQty;
+  const subHeaderStyle = {
+    font: { bold: true, size: 9 },
+    alignment: { horizontal: "center" },
+  };
 
-        const weight = item.weight >= 1000 ? (item.weight/1000) + 'kg' : item.weight + 'g';
+  const colHeaderStyle = {
+    font: { bold: true, size: 8, color: { argb: "FFFFFFFF" } },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF444444" } },
+    alignment: { horizontal: "center", vertical: "middle" },
+    border: {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    },
+  };
 
-        return {
-            sr: index + 1,
-            name: item.name.length > 18 ? item.name.substring(0, 16) + '..' : item.name,
-            cat: item.category.charAt(0).toUpperCase(),
-            cases: casesQty,
-            pcs: piecesQty,
-            rate: item.mrp,
-            amt: itemTotal
-        };
-    });
+  const cellStyle = {
+    font: { size: 8 },
+    alignment: { horizontal: "left", vertical: "middle" },
+    border: {
+      top: { style: "thin", color: { argb: "FFCCCCCC" } },
+      bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
+      left: { style: "thin", color: { argb: "FFCCCCCC" } },
+      right: { style: "thin", color: { argb: "FFCCCCCC" } },
+    },
+  };
 
-    const finalTotal = subtotal - totalDiscount;
+  const totalStyle = {
+    font: { bold: true, size: 10, color: { argb: "FFFFFFFF" } },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF27AE60" } },
+    alignment: { horizontal: "right", vertical: "middle" },
+    border: {
+      top: { style: "medium" },
+      bottom: { style: "medium" },
+      left: { style: "medium" },
+      right: { style: "medium" },
+    },
+  };
 
-    // Create workbook with ExcelJS
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Bill', {
-        pageSetup: {
-            paperSize: 11, // A5 (closest to A6)
-            orientation: 'portrait',
-            fitToPage: true,
-            margins: {
-                left: 0.2, right: 0.2,
-                top: 0.2, bottom: 0.2,
-                header: 0, footer: 0
-            }
-        }
-    });
+  let row = 1;
 
-    // Column widths for A6 (compact)
-    sheet.columns = [
-        { width: 3 },   // Sr
-        { width: 18 },  // Product
-        { width: 3 },   // Cat
-        { width: 4 },   // C
-        { width: 4 },   // P
-        { width: 6 },   // Rate
-        { width: 8 }    // Amt
+  // Store Header
+  sheet.mergeCells(`A${row}:G${row}`);
+  const headerCell = sheet.getCell(`A${row}`);
+  headerCell.value = "📦 WHOLESALE STORE";
+  headerCell.font = headerStyle.font;
+  headerCell.fill = headerStyle.fill;
+  headerCell.alignment = headerStyle.alignment;
+  sheet.getRow(row).height = 22;
+  row++;
+
+  // Bill Info Row
+  sheet.mergeCells(`A${row}:D${row}`);
+  sheet.getCell(`A${row}`).value = `Bill: ${billNumber}`;
+  sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
+  sheet.mergeCells(`E${row}:G${row}`);
+  sheet.getCell(`E${row}`).value = `${date} ${time}`;
+  sheet.getCell(`E${row}`).font = { size: 8 };
+  sheet.getCell(`E${row}`).alignment = { horizontal: "right" };
+  row++;
+
+  // Separator
+  sheet.mergeCells(`A${row}:G${row}`);
+  sheet.getCell(`A${row}`).border = {
+    bottom: { style: "medium", color: { argb: "FF667EEA" } },
+  };
+  sheet.getRow(row).height = 5;
+  row++;
+
+  // Column Headers
+  const headers = ["#", "Product", "C", "Cs", "Pc", "Rate", "Amount"];
+  headers.forEach((header, idx) => {
+    const cell = sheet.getCell(row, idx + 1);
+    cell.value = header;
+    cell.font = colHeaderStyle.font;
+    cell.fill = colHeaderStyle.fill;
+    cell.alignment = colHeaderStyle.alignment;
+    cell.border = colHeaderStyle.border;
+  });
+  sheet.getRow(row).height = 16;
+  row++;
+
+  // Items
+  billItems.forEach((item, idx) => {
+    const rowData = [
+      item.sr,
+      item.name,
+      item.cat,
+      item.cases,
+      item.pcs,
+      item.rate,
+      item.amt.toFixed(2),
     ];
-
-    // Styles
-    const headerStyle = {
-        font: { bold: true, size: 14, color: { argb: 'FFFFFFFF' } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF667EEA' } },
-        alignment: { horizontal: 'center', vertical: 'middle' }
-    };
-
-    const subHeaderStyle = {
-        font: { bold: true, size: 9 },
-        alignment: { horizontal: 'center' }
-    };
-
-    const colHeaderStyle = {
-        font: { bold: true, size: 8, color: { argb: 'FFFFFFFF' } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF444444' } },
-        alignment: { horizontal: 'center', vertical: 'middle' },
-        border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' }
-        }
-    };
-
-    const cellStyle = {
-        font: { size: 8 },
-        alignment: { horizontal: 'left', vertical: 'middle' },
-        border: {
-            top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-            bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-            left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-            right: { style: 'thin', color: { argb: 'FFCCCCCC' } }
-        }
-    };
-
-    const totalStyle = {
-        font: { bold: true, size: 10, color: { argb: 'FFFFFFFF' } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF27AE60' } },
-        alignment: { horizontal: 'right', vertical: 'middle' },
-        border: {
-            top: { style: 'medium' },
-            bottom: { style: 'medium' },
-            left: { style: 'medium' },
-            right: { style: 'medium' }
-        }
-    };
-
-    let row = 1;
-
-    // Store Header
-    sheet.mergeCells(`A${row}:G${row}`);
-    const headerCell = sheet.getCell(`A${row}`);
-    headerCell.value = '📦 WHOLESALE STORE';
-    headerCell.font = headerStyle.font;
-    headerCell.fill = headerStyle.fill;
-    headerCell.alignment = headerStyle.alignment;
-    sheet.getRow(row).height = 22;
-    row++;
-
-    // Bill Info Row
-    sheet.mergeCells(`A${row}:D${row}`);
-    sheet.getCell(`A${row}`).value = `Bill: ${billNumber}`;
-    sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
-    sheet.mergeCells(`E${row}:G${row}`);
-    sheet.getCell(`E${row}`).value = `${date} ${time}`;
-    sheet.getCell(`E${row}`).font = { size: 8 };
-    sheet.getCell(`E${row}`).alignment = { horizontal: 'right' };
-    row++;
-
-    // Separator
-    sheet.mergeCells(`A${row}:G${row}`);
-    sheet.getCell(`A${row}`).border = { bottom: { style: 'medium', color: { argb: 'FF667EEA' } } };
-    sheet.getRow(row).height = 5;
-    row++;
-
-    // Column Headers
-    const headers = ['#', 'Product', 'C', 'Cs', 'Pc', 'Rate', 'Amount'];
-    headers.forEach((header, idx) => {
-        const cell = sheet.getCell(row, idx + 1);
-        cell.value = header;
-        cell.font = colHeaderStyle.font;
-        cell.fill = colHeaderStyle.fill;
-        cell.alignment = colHeaderStyle.alignment;
-        cell.border = colHeaderStyle.border;
+    rowData.forEach((val, colIdx) => {
+      const cell = sheet.getCell(row, colIdx + 1);
+      cell.value = val;
+      cell.font = cellStyle.font;
+      cell.border = cellStyle.border;
+      cell.alignment =
+        colIdx === 1 ? { horizontal: "left" } : { horizontal: "center" };
+      if (colIdx === 6) cell.alignment = { horizontal: "right" };
     });
-    sheet.getRow(row).height = 16;
+    // Alternate row color
+    if (idx % 2 === 0) {
+      for (let c = 1; c <= 7; c++) {
+        sheet.getCell(row, c).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFF5F5F5" },
+        };
+      }
+    }
+    sheet.getRow(row).height = 14;
     row++;
+  });
 
-    // Items
-    billItems.forEach((item, idx) => {
-        const rowData = [item.sr, item.name, item.cat, item.cases, item.pcs, item.rate, item.amt.toFixed(2)];
-        rowData.forEach((val, colIdx) => {
-            const cell = sheet.getCell(row, colIdx + 1);
-            cell.value = val;
-            cell.font = cellStyle.font;
-            cell.border = cellStyle.border;
-            cell.alignment = colIdx === 1 ? { horizontal: 'left' } : { horizontal: 'center' };
-            if (colIdx === 6) cell.alignment = { horizontal: 'right' };
-        });
-        // Alternate row color
-        if (idx % 2 === 0) {
-            for (let c = 1; c <= 7; c++) {
-                sheet.getCell(row, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
-            }
-        }
-        sheet.getRow(row).height = 14;
-        row++;
-    });
+  // Separator before totals
+  sheet.mergeCells(`A${row}:G${row}`);
+  sheet.getCell(`A${row}`).border = {
+    top: { style: "medium", color: { argb: "FF444444" } },
+  };
+  sheet.getRow(row).height = 3;
+  row++;
 
-    // Separator before totals
-    sheet.mergeCells(`A${row}:G${row}`);
-    sheet.getCell(`A${row}`).border = { top: { style: 'medium', color: { argb: 'FF444444' } } };
-    sheet.getRow(row).height = 3;
-    row++;
+  // Summary section
+  const summaryBg = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFEEF2FF" },
+  };
 
-    // Summary section
-    const summaryBg = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2FF' } };
-    
-    // Subtotal
-    sheet.mergeCells(`A${row}:E${row}`);
-    sheet.getCell(`A${row}`).value = `Items: ${cart.length} | Cases: ${totalCases} | Pcs: ${totalPieces}`;
-    sheet.getCell(`A${row}`).font = { size: 7, italic: true };
-    sheet.getCell(`F${row}`).value = 'Subtotal:';
-    sheet.getCell(`F${row}`).font = { bold: true, size: 8 };
-    sheet.getCell(`F${row}`).alignment = { horizontal: 'right' };
-    sheet.getCell(`G${row}`).value = subtotal.toFixed(2);
-    sheet.getCell(`G${row}`).font = { size: 8 };
-    sheet.getCell(`G${row}`).alignment = { horizontal: 'right' };
-    for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
-    row++;
+  // Subtotal
+  sheet.mergeCells(`A${row}:E${row}`);
+  sheet.getCell(`A${row}`).value =
+    `Items: ${cart.length} | Cases: ${totalCases} | Pcs: ${totalPieces}`;
+  sheet.getCell(`A${row}`).font = { size: 7, italic: true };
+  sheet.getCell(`F${row}`).value = "Subtotal:";
+  sheet.getCell(`F${row}`).font = { bold: true, size: 8 };
+  sheet.getCell(`F${row}`).alignment = { horizontal: "right" };
+  sheet.getCell(`G${row}`).value = subtotal.toFixed(2);
+  sheet.getCell(`G${row}`).font = { size: 8 };
+  sheet.getCell(`G${row}`).alignment = { horizontal: "right" };
+  for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
+  row++;
 
-    // Discount
-    sheet.mergeCells(`A${row}:E${row}`);
-    sheet.getCell(`F${row}`).value = 'Disc 30%:';
-    sheet.getCell(`F${row}`).font = { bold: true, size: 8, color: { argb: 'FFE74C3C' } };
-    sheet.getCell(`F${row}`).alignment = { horizontal: 'right' };
-    sheet.getCell(`G${row}`).value = '-' + totalDiscount.toFixed(2);
-    sheet.getCell(`G${row}`).font = { size: 8, color: { argb: 'FFE74C3C' } };
-    sheet.getCell(`G${row}`).alignment = { horizontal: 'right' };
-    for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
-    row++;
+  // Discount
+  sheet.mergeCells(`A${row}:E${row}`);
+  sheet.getCell(`F${row}`).value = "Disc 30%:";
+  sheet.getCell(`F${row}`).font = {
+    bold: true,
+    size: 8,
+    color: { argb: "FFE74C3C" },
+  };
+  sheet.getCell(`F${row}`).alignment = { horizontal: "right" };
+  sheet.getCell(`G${row}`).value = "-" + totalDiscount.toFixed(2);
+  sheet.getCell(`G${row}`).font = { size: 8, color: { argb: "FFE74C3C" } };
+  sheet.getCell(`G${row}`).alignment = { horizontal: "right" };
+  for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
+  row++;
 
-    // Grand Total
-    sheet.mergeCells(`A${row}:E${row}`);
-    sheet.getCell(`A${row}`).value = 'Thank You!';
-    sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
-    sheet.getCell(`A${row}`).alignment = { horizontal: 'center' };
-    sheet.mergeCells(`F${row}:G${row}`);
-    sheet.getCell(`F${row}`).value = '₹ ' + finalTotal.toFixed(2);
-    sheet.getCell(`F${row}`).font = totalStyle.font;
-    sheet.getCell(`F${row}`).fill = totalStyle.fill;
-    sheet.getCell(`F${row}`).alignment = { horizontal: 'center', vertical: 'middle' };
-    sheet.getCell(`F${row}`).border = totalStyle.border;
-    sheet.getRow(row).height = 20;
-    row++;
+  // Grand Total
+  sheet.mergeCells(`A${row}:E${row}`);
+  sheet.getCell(`A${row}`).value = "Thank You!";
+  sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
+  sheet.getCell(`A${row}`).alignment = { horizontal: "center" };
+  sheet.mergeCells(`F${row}:G${row}`);
+  sheet.getCell(`F${row}`).value = "₹ " + finalTotal.toFixed(2);
+  sheet.getCell(`F${row}`).font = totalStyle.font;
+  sheet.getCell(`F${row}`).fill = totalStyle.fill;
+  sheet.getCell(`F${row}`).alignment = {
+    horizontal: "center",
+    vertical: "middle",
+  };
+  sheet.getCell(`F${row}`).border = totalStyle.border;
+  sheet.getRow(row).height = 20;
+  row++;
 
-    // Generate and download
-    const fileName = `Bill_${billNumber}.xlsx`;
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    link.click();
+  // Generate and download
+  const fileName = `Bill_${billNumber}.xlsx`;
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
 
-    alert(`✅ Bill exported and saved to history!\n\n📄 ${fileName}\n💰 Total: ₹${finalTotal.toFixed(2)}\n📏 A6 size - Ready to print!`);
+  alert(
+    `✅ Bill exported and saved to history!\n\n📄 ${fileName}\n💰 Total: ₹${finalTotal.toFixed(2)}\n📏 A6 size - Ready to print!`,
+  );
 
-    // Clear cart
-    cart = [];
-    updateCart();
-    saveCartToStorage();
-    toggleCart();
+  // Clear cart
+  cart = [];
+  updateCart();
+  saveCartToStorage();
+  toggleCart();
 }
 
 // Render bill history
 function renderHistory() {
-    const historyList = document.getElementById('historyList');
-    const history = getBillHistory();
+  const historyList = document.getElementById("historyList");
+  const history = getBillHistory();
 
-    if (history.length === 0) {
-        historyList.innerHTML = '<div class="cart-empty">No bills saved yet</div>';
-        return;
-    }
+  if (history.length === 0) {
+    historyList.innerHTML = '<div class="cart-empty">No bills saved yet</div>';
+    return;
+  }
 
-    historyList.innerHTML =
-        history.map((bill, index) => `
+  historyList.innerHTML = history
+    .map(
+      (bill, index) => `
             <div class="bill-card">
                 <div class="bill-header">
                     <span class="bill-number">${bill.billNumber}</span>
@@ -951,15 +1096,19 @@ function renderHistory() {
                 </div>
 
                 <div class="bill-items">
-                    ${bill.items.map(item => `
+                    ${bill.items
+                      .map(
+                        (item) => `
                         <div class="bill-item-row">
                             <span>${item.name}</span>
                             <span>
-                                ${(item.cases || 0) > 0 ? item.cases + 'C ' : ''}
-                                ${(item.pieces || 0) > 0 ? item.pieces + 'P' : ''}
+                                ${(item.cases || 0) > 0 ? item.cases + "C " : ""}
+                                ${(item.pieces || 0) > 0 ? item.pieces + "P" : ""}
                             </span>
                         </div>
-                    `).join('')}
+                    `,
+                      )
+                      .join("")}
                 </div>
 
                 <div class="bill-totals">
@@ -972,27 +1121,27 @@ function renderHistory() {
                     <button onclick="deleteBill(${index})">Delete</button>
                 </div>
             </div>
-        `).join('');
+        `,
+    )
+    .join("");
 }
-
-
 
 // View bill details
 function viewBill(index) {
-    const bill = billHistory[index];
-    if (!bill) return;
+  const bill = billHistory[index];
+  if (!bill) return;
 
-    const modal = document.getElementById('billDetailModal');
-    const overlay = document.getElementById('billDetailOverlay');
-    const title = document.getElementById('billDetailTitle');
-    const content = document.getElementById('billDetailContent');
-    const exportBtn = document.getElementById('billDetailExportBtn');
-    const deleteBtn = document.getElementById('billDetailDeleteBtn');
+  const modal = document.getElementById("billDetailModal");
+  const overlay = document.getElementById("billDetailOverlay");
+  const title = document.getElementById("billDetailTitle");
+  const content = document.getElementById("billDetailContent");
+  const exportBtn = document.getElementById("billDetailExportBtn");
+  const deleteBtn = document.getElementById("billDetailDeleteBtn");
 
-    title.textContent = `Bill Details: ${bill.billNumber}`;
-    
-    // Generate table HTML
-    let tableHtml = `
+  title.textContent = `Bill Details: ${bill.billNumber}`;
+
+  // Generate table HTML
+  let tableHtml = `
         <div class="bill-meta" style="margin-bottom: 15px; color: #666;">
             <strong>Date:</strong> ${bill.date}
         </div>
@@ -1012,39 +1161,41 @@ function viewBill(index) {
             <tbody>
     `;
 
-    bill.items.forEach(item => {
-        const caseTotal = item.mrp * item.piecesPerCase;
-        const discountedCaseTotal = caseTotal * 0.7;
-        const perPiecePrice = item.mrp;
-        const perPieceDiscounted = perPiecePrice * 0.7;
+  bill.items.forEach((item) => {
+    const caseTotal = item.mrp * item.piecesPerCase;
+    const discountedCaseTotal = caseTotal * 0.7;
+    const perPiecePrice = item.mrp;
+    const perPieceDiscounted = perPiecePrice * 0.7;
 
-        const casesQty = item.cases || 0;
-        const piecesQty = item.pieces || 0;
+    const casesQty = item.cases || 0;
+    const piecesQty = item.pieces || 0;
 
-        const preDiscount = (caseTotal * casesQty) + (perPiecePrice * piecesQty);
-        const discount = (caseTotal * 0.3 * casesQty) + (perPiecePrice * 0.3 * piecesQty);
-        const itemTotal = (discountedCaseTotal * casesQty) + (perPieceDiscounted * piecesQty);
+    const preDiscount = caseTotal * casesQty + perPiecePrice * piecesQty;
+    const discount =
+      caseTotal * 0.3 * casesQty + perPiecePrice * 0.3 * piecesQty;
+    const itemTotal =
+      discountedCaseTotal * casesQty + perPieceDiscounted * piecesQty;
 
-        const categoryAbbr = item.category.charAt(0).toUpperCase();
+    const categoryAbbr = item.category.charAt(0).toUpperCase();
 
-        tableHtml += `
+    tableHtml += `
             <tr>
                 <td>${item.name}</td>
                 <td>${categoryAbbr}</td>
                 <td>₹${item.mrp}</td>
-                <td>${item.weight >= 1000 ? (item.weight/1000) + 'kg' : item.weight + 'g'}</td>
+                <td>${item.weight >= 1000 ? item.weight / 1000 + "kg" : item.weight + "g"}</td>
                 <td>
-                    ${casesQty > 0 ? casesQty + 'C' : ''} 
-                    ${piecesQty > 0 ? piecesQty + 'P' : ''}
+                    ${casesQty > 0 ? casesQty + "C" : ""} 
+                    ${piecesQty > 0 ? piecesQty + "P" : ""}
                 </td>
                 <td>₹${preDiscount.toFixed(2)}</td>
                 <td>₹${discount.toFixed(2)}</td>
                 <td>₹${itemTotal.toFixed(2)}</td>
             </tr>
         `;
-    });
+  });
 
-    tableHtml += `
+  tableHtml += `
             </tbody>
         </table>
         <div class="cart-summary">
@@ -1063,455 +1214,526 @@ function viewBill(index) {
         </div>
     `;
 
-    content.innerHTML = tableHtml;
+  content.innerHTML = tableHtml;
 
-    // Setup buttons
-    exportBtn.onclick = () => exportSingleBill(index);
-    deleteBtn.onclick = () => {
-        deleteBill(index);
-        closeBillDetailModal();
-    };
+  // Setup buttons
+  exportBtn.onclick = () => exportSingleBill(index);
+  deleteBtn.onclick = () => {
+    deleteBill(index);
+    closeBillDetailModal();
+  };
 
-    modal.classList.add('visible');
-    overlay.classList.add('visible');
+  modal.classList.add("visible");
+  overlay.classList.add("visible");
 }
 
 function closeBillDetailModal() {
-    document.getElementById('billDetailModal').classList.remove('visible');
-    document.getElementById('billDetailOverlay').classList.remove('visible');
+  document.getElementById("billDetailModal").classList.remove("visible");
+  document.getElementById("billDetailOverlay").classList.remove("visible");
 }
 
 async function exportSingleBill(index) {
-    const bill = billHistory[index];
-    if (!bill) return;
+  const bill = billHistory[index];
+  if (!bill) return;
 
-    // Reconstruct cart-like structure for export function
-    // We can reuse the logic but we need to adapt it since exportToExcel uses global 'cart'
-    // Instead, let's create a specific export function for history bills
-    
-    const billNumber = bill.billNumber;
-    const dateObj = new Date(bill.date); // Parse date string back to object if possible, or just use current
-    // Note: bill.date is a locale string, might be hard to parse exactly. 
-    // For simplicity in this context, we'll use current date for file generation or try to parse.
-    
-    const date = new Date().toLocaleDateString('en-IN', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: 'numeric'
-    });
-    const time = new Date().toLocaleTimeString('en-IN', { 
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+  // Reconstruct cart-like structure for export function
+  // We can reuse the logic but we need to adapt it since exportToExcel uses global 'cart'
+  // Instead, let's create a specific export function for history bills
 
-    // Calculate totals
-    let subtotal = 0;
-    let totalDiscount = 0;
-    let totalCases = 0;
-    let totalPieces = 0;
+  const billNumber = bill.billNumber;
+  const dateObj = new Date(bill.date); // Parse date string back to object if possible, or just use current
+  // Note: bill.date is a locale string, might be hard to parse exactly.
+  // For simplicity in this context, we'll use current date for file generation or try to parse.
 
-    const billItems = bill.items.map((item, idx) => {
-        const casesQty = item.cases || 0;
-        const piecesQty = item.pieces || 0;
-        const caseTotal = item.mrp * item.piecesPerCase;
-        const perPiecePrice = item.mrp;
-        
-        const preDiscount = (caseTotal * casesQty) + (perPiecePrice * piecesQty);
-        const discount = preDiscount * 0.3;
-        const itemTotal = preDiscount - discount;
+  const date = new Date().toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const time = new Date().toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-        subtotal += preDiscount;
-        totalDiscount += discount;
-        totalCases += casesQty;
-        totalPieces += piecesQty;
+  // Calculate totals
+  let subtotal = 0;
+  let totalDiscount = 0;
+  let totalCases = 0;
+  let totalPieces = 0;
 
-        return {
-            sr: idx + 1,
-            name: item.name.length > 18 ? item.name.substring(0, 16) + '..' : item.name,
-            cat: item.category.charAt(0).toUpperCase(),
-            cases: casesQty,
-            pcs: piecesQty,
-            rate: item.mrp,
-            amt: itemTotal
-        };
-    });
+  const billItems = bill.items.map((item, idx) => {
+    const casesQty = item.cases || 0;
+    const piecesQty = item.pieces || 0;
+    const caseTotal = item.mrp * item.piecesPerCase;
+    const perPiecePrice = item.mrp;
 
-    const finalTotal = subtotal - totalDiscount;
+    const preDiscount = caseTotal * casesQty + perPiecePrice * piecesQty;
+    const discount = preDiscount * 0.3;
+    const itemTotal = preDiscount - discount;
 
-    // Create workbook with ExcelJS
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Bill', {
-        pageSetup: {
-            paperSize: 11, // A5 (closest to A6)
-            orientation: 'portrait',
-            fitToPage: true,
-            margins: {
-                left: 0.2, right: 0.2,
-                top: 0.2, bottom: 0.2,
-                header: 0, footer: 0
-            }
-        }
-    });
+    subtotal += preDiscount;
+    totalDiscount += discount;
+    totalCases += casesQty;
+    totalPieces += piecesQty;
 
-    // Column widths for A6 (compact)
-    sheet.columns = [
-        { width: 3 },   // Sr
-        { width: 18 },  // Product
-        { width: 3 },   // Cat
-        { width: 4 },   // C
-        { width: 4 },   // P
-        { width: 6 },   // Rate
-        { width: 8 }    // Amt
+    return {
+      sr: idx + 1,
+      name:
+        item.name.length > 18 ? item.name.substring(0, 16) + ".." : item.name,
+      cat: item.category.charAt(0).toUpperCase(),
+      cases: casesQty,
+      pcs: piecesQty,
+      rate: item.mrp,
+      amt: itemTotal,
+    };
+  });
+
+  const finalTotal = subtotal - totalDiscount;
+
+  // Create workbook with ExcelJS
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Bill", {
+    pageSetup: {
+      paperSize: 11, // A5 (closest to A6)
+      orientation: "portrait",
+      fitToPage: true,
+      margins: {
+        left: 0.2,
+        right: 0.2,
+        top: 0.2,
+        bottom: 0.2,
+        header: 0,
+        footer: 0,
+      },
+    },
+  });
+
+  // Column widths for A6 (compact)
+  sheet.columns = [
+    { width: 3 }, // Sr
+    { width: 18 }, // Product
+    { width: 3 }, // Cat
+    { width: 4 }, // C
+    { width: 4 }, // P
+    { width: 6 }, // Rate
+    { width: 8 }, // Amt
+  ];
+
+  // Styles (Same as before)
+  const headerStyle = {
+    font: { bold: true, size: 14, color: { argb: "FFFFFFFF" } },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF667EEA" } },
+    alignment: { horizontal: "center", vertical: "middle" },
+  };
+
+  const colHeaderStyle = {
+    font: { bold: true, size: 8, color: { argb: "FFFFFFFF" } },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF444444" } },
+    alignment: { horizontal: "center", vertical: "middle" },
+    border: {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" },
+    },
+  };
+
+  const cellStyle = {
+    font: { size: 8 },
+    alignment: { horizontal: "left", vertical: "middle" },
+    border: {
+      top: { style: "thin", color: { argb: "FFCCCCCC" } },
+      bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
+      left: { style: "thin", color: { argb: "FFCCCCCC" } },
+      right: { style: "thin", color: { argb: "FFCCCCCC" } },
+    },
+  };
+
+  const totalStyle = {
+    font: { bold: true, size: 10, color: { argb: "FFFFFFFF" } },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF27AE60" } },
+    alignment: { horizontal: "right", vertical: "middle" },
+    border: {
+      top: { style: "medium" },
+      bottom: { style: "medium" },
+      left: { style: "medium" },
+      right: { style: "medium" },
+    },
+  };
+
+  let row = 1;
+
+  // Store Header
+  sheet.mergeCells(`A${row}:G${row}`);
+  const headerCell = sheet.getCell(`A${row}`);
+  headerCell.value = "📦 WHOLESALE STORE";
+  headerCell.font = headerStyle.font;
+  headerCell.fill = headerStyle.fill;
+  headerCell.alignment = headerStyle.alignment;
+  sheet.getRow(row).height = 22;
+  row++;
+
+  // Bill Info Row
+  sheet.mergeCells(`A${row}:D${row}`);
+  sheet.getCell(`A${row}`).value = `Bill: ${billNumber}`;
+  sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
+  sheet.mergeCells(`E${row}:G${row}`);
+  sheet.getCell(`E${row}`).value = `${date} ${time}`;
+  sheet.getCell(`E${row}`).font = { size: 8 };
+  sheet.getCell(`E${row}`).alignment = { horizontal: "right" };
+  row++;
+
+  // Separator
+  sheet.mergeCells(`A${row}:G${row}`);
+  sheet.getCell(`A${row}`).border = {
+    bottom: { style: "medium", color: { argb: "FF667EEA" } },
+  };
+  sheet.getRow(row).height = 5;
+  row++;
+
+  // Column Headers
+  const headers = ["#", "Product", "C", "Cs", "Pc", "Rate", "Amount"];
+  headers.forEach((header, idx) => {
+    const cell = sheet.getCell(row, idx + 1);
+    cell.value = header;
+    cell.font = colHeaderStyle.font;
+    cell.fill = colHeaderStyle.fill;
+    cell.alignment = colHeaderStyle.alignment;
+    cell.border = colHeaderStyle.border;
+  });
+  sheet.getRow(row).height = 16;
+  row++;
+
+  // Items
+  billItems.forEach((item, idx) => {
+    const rowData = [
+      item.sr,
+      item.name,
+      item.cat,
+      item.cases,
+      item.pcs,
+      item.rate,
+      item.amt.toFixed(2),
     ];
-
-    // Styles (Same as before)
-    const headerStyle = {
-        font: { bold: true, size: 14, color: { argb: 'FFFFFFFF' } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF667EEA' } },
-        alignment: { horizontal: 'center', vertical: 'middle' }
-    };
-
-    const colHeaderStyle = {
-        font: { bold: true, size: 8, color: { argb: 'FFFFFFFF' } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF444444' } },
-        alignment: { horizontal: 'center', vertical: 'middle' },
-        border: {
-            top: { style: 'thin' },
-            bottom: { style: 'thin' },
-            left: { style: 'thin' },
-            right: { style: 'thin' }
-        }
-    };
-
-    const cellStyle = {
-        font: { size: 8 },
-        alignment: { horizontal: 'left', vertical: 'middle' },
-        border: {
-            top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-            bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-            left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-            right: { style: 'thin', color: { argb: 'FFCCCCCC' } }
-        }
-    };
-
-    const totalStyle = {
-        font: { bold: true, size: 10, color: { argb: 'FFFFFFFF' } },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF27AE60' } },
-        alignment: { horizontal: 'right', vertical: 'middle' },
-        border: {
-            top: { style: 'medium' },
-            bottom: { style: 'medium' },
-            left: { style: 'medium' },
-            right: { style: 'medium' }
-        }
-    };
-
-    let row = 1;
-
-    // Store Header
-    sheet.mergeCells(`A${row}:G${row}`);
-    const headerCell = sheet.getCell(`A${row}`);
-    headerCell.value = '📦 WHOLESALE STORE';
-    headerCell.font = headerStyle.font;
-    headerCell.fill = headerStyle.fill;
-    headerCell.alignment = headerStyle.alignment;
-    sheet.getRow(row).height = 22;
-    row++;
-
-    // Bill Info Row
-    sheet.mergeCells(`A${row}:D${row}`);
-    sheet.getCell(`A${row}`).value = `Bill: ${billNumber}`;
-    sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
-    sheet.mergeCells(`E${row}:G${row}`);
-    sheet.getCell(`E${row}`).value = `${date} ${time}`;
-    sheet.getCell(`E${row}`).font = { size: 8 };
-    sheet.getCell(`E${row}`).alignment = { horizontal: 'right' };
-    row++;
-
-    // Separator
-    sheet.mergeCells(`A${row}:G${row}`);
-    sheet.getCell(`A${row}`).border = { bottom: { style: 'medium', color: { argb: 'FF667EEA' } } };
-    sheet.getRow(row).height = 5;
-    row++;
-
-    // Column Headers
-    const headers = ['#', 'Product', 'C', 'Cs', 'Pc', 'Rate', 'Amount'];
-    headers.forEach((header, idx) => {
-        const cell = sheet.getCell(row, idx + 1);
-        cell.value = header;
-        cell.font = colHeaderStyle.font;
-        cell.fill = colHeaderStyle.fill;
-        cell.alignment = colHeaderStyle.alignment;
-        cell.border = colHeaderStyle.border;
+    rowData.forEach((val, colIdx) => {
+      const cell = sheet.getCell(row, colIdx + 1);
+      cell.value = val;
+      cell.font = cellStyle.font;
+      cell.border = cellStyle.border;
+      cell.alignment =
+        colIdx === 1 ? { horizontal: "left" } : { horizontal: "center" };
+      if (colIdx === 6) cell.alignment = { horizontal: "right" };
     });
-    sheet.getRow(row).height = 16;
+    // Alternate row color
+    if (idx % 2 === 0) {
+      for (let c = 1; c <= 7; c++) {
+        sheet.getCell(row, c).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFF5F5F5" },
+        };
+      }
+    }
+    sheet.getRow(row).height = 14;
     row++;
+  });
 
-    // Items
-    billItems.forEach((item, idx) => {
-        const rowData = [item.sr, item.name, item.cat, item.cases, item.pcs, item.rate, item.amt.toFixed(2)];
-        rowData.forEach((val, colIdx) => {
-            const cell = sheet.getCell(row, colIdx + 1);
-            cell.value = val;
-            cell.font = cellStyle.font;
-            cell.border = cellStyle.border;
-            cell.alignment = colIdx === 1 ? { horizontal: 'left' } : { horizontal: 'center' };
-            if (colIdx === 6) cell.alignment = { horizontal: 'right' };
-        });
-        // Alternate row color
-        if (idx % 2 === 0) {
-            for (let c = 1; c <= 7; c++) {
-                sheet.getCell(row, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
-            }
-        }
-        sheet.getRow(row).height = 14;
-        row++;
-    });
+  // Separator before totals
+  sheet.mergeCells(`A${row}:G${row}`);
+  sheet.getCell(`A${row}`).border = {
+    top: { style: "medium", color: { argb: "FF444444" } },
+  };
+  sheet.getRow(row).height = 3;
+  row++;
 
-    // Separator before totals
-    sheet.mergeCells(`A${row}:G${row}`);
-    sheet.getCell(`A${row}`).border = { top: { style: 'medium', color: { argb: 'FF444444' } } };
-    sheet.getRow(row).height = 3;
-    row++;
+  // Summary section
+  const summaryBg = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFEEF2FF" },
+  };
 
-    // Summary section
-    const summaryBg = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2FF' } };
-    
-    // Subtotal
-    sheet.mergeCells(`A${row}:E${row}`);
-    sheet.getCell(`A${row}`).value = `Items: ${bill.items.length} | Cases: ${totalCases} | Pcs: ${totalPieces}`;
-    sheet.getCell(`A${row}`).font = { size: 7, italic: true };
-    sheet.getCell(`F${row}`).value = 'Subtotal:';
-    sheet.getCell(`F${row}`).font = { bold: true, size: 8 };
-    sheet.getCell(`F${row}`).alignment = { horizontal: 'right' };
-    sheet.getCell(`G${row}`).value = subtotal.toFixed(2);
-    sheet.getCell(`G${row}`).font = { size: 8 };
-    sheet.getCell(`G${row}`).alignment = { horizontal: 'right' };
-    for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
-    row++;
+  // Subtotal
+  sheet.mergeCells(`A${row}:E${row}`);
+  sheet.getCell(`A${row}`).value =
+    `Items: ${bill.items.length} | Cases: ${totalCases} | Pcs: ${totalPieces}`;
+  sheet.getCell(`A${row}`).font = { size: 7, italic: true };
+  sheet.getCell(`F${row}`).value = "Subtotal:";
+  sheet.getCell(`F${row}`).font = { bold: true, size: 8 };
+  sheet.getCell(`F${row}`).alignment = { horizontal: "right" };
+  sheet.getCell(`G${row}`).value = subtotal.toFixed(2);
+  sheet.getCell(`G${row}`).font = { size: 8 };
+  sheet.getCell(`G${row}`).alignment = { horizontal: "right" };
+  for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
+  row++;
 
-    // Discount
-    sheet.mergeCells(`A${row}:E${row}`);
-    sheet.getCell(`F${row}`).value = 'Disc 30%:';
-    sheet.getCell(`F${row}`).font = { bold: true, size: 8, color: { argb: 'FFE74C3C' } };
-    sheet.getCell(`F${row}`).alignment = { horizontal: 'right' };
-    sheet.getCell(`G${row}`).value = '-' + totalDiscount.toFixed(2);
-    sheet.getCell(`G${row}`).font = { size: 8, color: { argb: 'FFE74C3C' } };
-    sheet.getCell(`G${row}`).alignment = { horizontal: 'right' };
-    for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
-    row++;
+  // Discount
+  sheet.mergeCells(`A${row}:E${row}`);
+  sheet.getCell(`F${row}`).value = "Disc 30%:";
+  sheet.getCell(`F${row}`).font = {
+    bold: true,
+    size: 8,
+    color: { argb: "FFE74C3C" },
+  };
+  sheet.getCell(`F${row}`).alignment = { horizontal: "right" };
+  sheet.getCell(`G${row}`).value = "-" + totalDiscount.toFixed(2);
+  sheet.getCell(`G${row}`).font = { size: 8, color: { argb: "FFE74C3C" } };
+  sheet.getCell(`G${row}`).alignment = { horizontal: "right" };
+  for (let c = 1; c <= 7; c++) sheet.getCell(row, c).fill = summaryBg;
+  row++;
 
-    // Grand Total
-    sheet.mergeCells(`A${row}:E${row}`);
-    sheet.getCell(`A${row}`).value = 'Thank You!';
-    sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
-    sheet.getCell(`A${row}`).alignment = { horizontal: 'center' };
-    sheet.mergeCells(`F${row}:G${row}`);
-    sheet.getCell(`F${row}`).value = '₹ ' + finalTotal.toFixed(2);
-    sheet.getCell(`F${row}`).font = totalStyle.font;
-    sheet.getCell(`F${row}`).fill = totalStyle.fill;
-    sheet.getCell(`F${row}`).alignment = { horizontal: 'center', vertical: 'middle' };
-    sheet.getCell(`F${row}`).border = totalStyle.border;
-    sheet.getRow(row).height = 20;
-    row++;
+  // Grand Total
+  sheet.mergeCells(`A${row}:E${row}`);
+  sheet.getCell(`A${row}`).value = "Thank You!";
+  sheet.getCell(`A${row}`).font = { bold: true, size: 9 };
+  sheet.getCell(`A${row}`).alignment = { horizontal: "center" };
+  sheet.mergeCells(`F${row}:G${row}`);
+  sheet.getCell(`F${row}`).value = "₹ " + finalTotal.toFixed(2);
+  sheet.getCell(`F${row}`).font = totalStyle.font;
+  sheet.getCell(`F${row}`).fill = totalStyle.fill;
+  sheet.getCell(`F${row}`).alignment = {
+    horizontal: "center",
+    vertical: "middle",
+  };
+  sheet.getCell(`F${row}`).border = totalStyle.border;
+  sheet.getRow(row).height = 20;
+  row++;
 
-    // Generate and download
-    const fileName = `Bill_${billNumber}.xlsx`;
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    link.click();
+  // Generate and download
+  const fileName = `Bill_${billNumber}.xlsx`;
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
 
-    alert(`✅ Bill exported!\n\n📄 ${fileName}\n💰 Total: ₹${finalTotal.toFixed(2)}\n📏 A6 size - Ready to print!`);
+  alert(
+    `✅ Bill exported!\n\n📄 ${fileName}\n💰 Total: ₹${finalTotal.toFixed(2)}\n📏 A6 size - Ready to print!`,
+  );
 }
 
 // Delete a bill
 function deleteBill(index) {
-    if (confirm('Are you sure you want to delete this bill?')) {
-        billHistory.splice(index, 1);
-        localStorage.setItem('billHistory', JSON.stringify(billHistory));
-        renderHistory();
-    }
+  if (confirm("Are you sure you want to delete this bill?")) {
+    billHistory.splice(index, 1);
+    localStorage.setItem("billHistory", JSON.stringify(billHistory));
+    renderHistory();
+  }
 }
 
 // Clear all history
 function clearHistory() {
-    if (billHistory.length === 0) {
-        alert('History is already empty');
-        return;
-    }
+  if (billHistory.length === 0) {
+    alert("History is already empty");
+    return;
+  }
 
-    if (confirm('Are you sure you want to delete ALL bill history? This cannot be undone.')) {
-        billHistory = [];
-        localStorage.setItem('billHistory', JSON.stringify(billHistory));
-        renderHistory();
-    }
+  if (
+    confirm(
+      "Are you sure you want to delete ALL bill history? This cannot be undone.",
+    )
+  ) {
+    billHistory = [];
+    localStorage.setItem("billHistory", JSON.stringify(billHistory));
+    renderHistory();
+  }
 }
 
 // Toggle history visibility
 function toggleHistory() {
-    const historySection = document.getElementById('historySection');
-    const historyOverlay = document.getElementById('historyOverlay');
+  const historySection = document.getElementById("historySection");
+  const historyOverlay = document.getElementById("historyOverlay");
 
-    historySection.classList.toggle('visible');
-    historyOverlay.classList.toggle('visible');
+  historySection.classList.toggle("visible");
+  historyOverlay.classList.toggle("visible");
 }
 
 // Product Management Functions
 
 function openAddModal() {
-    document.getElementById('productModal').classList.add('visible');
-    document.getElementById('productModalOverlay').classList.add('visible');
-    document.getElementById('modalTitle').textContent = 'Add New Product';
-    document.getElementById('productForm').reset();
-    document.getElementById('editProductId').value = '';
-    document.getElementById('deleteProductBtn').style.display = 'none';
+  document.getElementById("productModal").classList.add("visible");
+  document.getElementById("productModalOverlay").classList.add("visible");
+  document.getElementById("modalTitle").textContent = "Add New Product";
+  document.getElementById("productForm").reset();
+  document.getElementById("editProductId").value = "";
+  document.getElementById("deleteProductBtn").style.display = "none";
 }
 
 function openEditModal(productId) {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
+  const product = products.find((p) => p.id === productId);
+  if (!product) return;
 
-    document.getElementById('productModal').classList.add('visible');
-    document.getElementById('productModalOverlay').classList.add('visible');
-    document.getElementById('modalTitle').textContent = 'Edit Product';
-    
-    document.getElementById('editProductId').value = product.id;
-    document.getElementById('editName').value = product.name;
-    document.getElementById('editMrp').value = product.mrp;
-    document.getElementById('editWeight').value = product.weight;
-    document.getElementById('editCategory').value = product.category;
-    document.getElementById('editPieces').value = product.piecesPerCase;
-    
-    document.getElementById('deleteProductBtn').style.display = 'block';
+  document.getElementById("productModal").classList.add("visible");
+  document.getElementById("productModalOverlay").classList.add("visible");
+  document.getElementById("modalTitle").textContent = "Edit Product";
+
+  document.getElementById("editProductId").value = product.id;
+  document.getElementById("editName").value = product.name;
+  document.getElementById("editMrp").value = product.mrp;
+  document.getElementById("editWeight").value = product.weight;
+  document.getElementById("editCategory").value = product.category;
+  document.getElementById("editPieces").value = product.piecesPerCase;
+
+  document.getElementById("deleteProductBtn").style.display = "block";
 }
 
 function closeProductModal() {
-    document.getElementById('productModal').classList.remove('visible');
-    document.getElementById('productModalOverlay').classList.remove('visible');
+  document.getElementById("productModal").classList.remove("visible");
+  document.getElementById("productModalOverlay").classList.remove("visible");
 }
 
 function handleProductSubmit(e) {
-    e.preventDefault();
-    
-    const id = document.getElementById('editProductId').value;
-    const name = document.getElementById('editName').value;
-    const mrp = parseFloat(document.getElementById('editMrp').value);
-    const weight = parseFloat(document.getElementById('editWeight').value);
-    const category = document.getElementById('editCategory').value;
-    const piecesPerCase = parseInt(document.getElementById('editPieces').value);
+  e.preventDefault();
 
-    if (id) {
-        // Edit existing
-        const index = products.findIndex(p => p.id == id);
-        if (index !== -1) {
-            products[index] = {
-                ...products[index],
-                name,
-                mrp,
-                weight,
-                category,
-                piecesPerCase
-            };
-        }
-    } else {
-        // Add new
-        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        products.unshift({
-            id: newId,
-            name,
-            mrp,
-            weight,
-            category,
-            piecesPerCase
-        });
+  const id = document.getElementById("editProductId").value;
+  const name = document.getElementById("editName").value;
+  const mrp = parseFloat(document.getElementById("editMrp").value);
+  const weight = parseFloat(document.getElementById("editWeight").value);
+  const category = document.getElementById("editCategory").value;
+  const piecesPerCase = parseInt(document.getElementById("editPieces").value);
+
+  if (id) {
+    // Edit existing
+    const index = products.findIndex((p) => p.id == id);
+    if (index !== -1) {
+      products[index] = {
+        ...products[index],
+        name,
+        mrp,
+        weight,
+        category,
+        piecesPerCase,
+      };
     }
+  } else {
+    // Add new
+    const newId =
+      products.length > 0 ? Math.max(...products.map((p) => p.id)) + 1 : 1;
+    products.unshift({
+      id: newId,
+      name,
+      mrp,
+      weight,
+      category,
+      piecesPerCase,
+    });
+  }
 
-    saveProductsToStorage();
-    
-    // Update filtered products if search is active, otherwise reset
-    searchProducts();
-    
-    closeProductModal();
-    alert(id ? 'Product updated successfully!' : 'Product added successfully!');
+  saveProductsToStorage();
+
+  // Update filtered products if search is active, otherwise reset
+  searchProducts();
+
+  closeProductModal();
+  alert(id ? "Product updated successfully!" : "Product added successfully!");
 }
 
 function deleteCurrentProduct() {
-    const id = document.getElementById('editProductId').value;
-    if (!id) return;
+  const id = document.getElementById("editProductId").value;
+  if (!id) return;
 
-    if (confirm('Are you sure you want to delete this product?')) {
-        const index = products.findIndex(p => p.id == id);
-        if (index !== -1) {
-            products.splice(index, 1);
-            saveProductsToStorage();
-            searchProducts();
-            closeProductModal();
-        }
+  if (confirm("Are you sure you want to delete this product?")) {
+    const index = products.findIndex((p) => p.id == id);
+    if (index !== -1) {
+      products.splice(index, 1);
+      saveProductsToStorage();
+      searchProducts();
+      closeProductModal();
     }
+  }
 }
 
 // Initialize on page load
-if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", init);
 } else {
-    init();
+  init();
 }
 
-// ===== 3 DOT MENU =====
-const menuBtn = document.getElementById('menuBtn');
-const menuDropdown = document.getElementById('menuDropdown');
-
-if (menuBtn) {
-    menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        menuDropdown.style.display =
-            menuDropdown.style.display === 'flex' ? 'none' : 'flex';
-    });
-}
-
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.menu-wrapper')) {
-        if (menuDropdown) menuDropdown.style.display = 'none';
+// ===== WORKING MENU SOLUTION =====
+function toggleMenu() {
+  const menuDropdown = document.getElementById("menuDropdown");
+  if (menuDropdown) {
+    if (menuDropdown.style.display === "block") {
+      menuDropdown.style.display = "none";
+    } else {
+      menuDropdown.style.display = "block";
     }
+  }
+}
+
+// Close menu when clicking outside
+document.addEventListener("click", function (e) {
+  const menuDropdown = document.getElementById("menuDropdown");
+  const menuBtn = document.getElementById("menuBtn");
+  const navbarActions = document.querySelector(".navbar-actions");
+
+  if (menuDropdown && menuDropdown.style.display === "block") {
+    if (
+      !menuBtn.contains(e.target) &&
+      !menuDropdown.contains(e.target) &&
+      !navbarActions.contains(e.target)
+    ) {
+      menuDropdown.style.display = "none";
+    }
+  }
 });
 
+// Close filter panel when clicking outside
+document.addEventListener("click", function (e) {
+  const filterPanel = document.getElementById("filterPanel");
+  const filterBtn = document.getElementById("filterBtn");
 
+  if (filterPanel && filterPanel.style.display === "block") {
+    if (!filterBtn.contains(e.target) && !filterPanel.contains(e.target)) {
+      filterPanel.style.display = "none";
+    }
+  }
+});
 
-// ===== MENU BUTTON ACTIONS FIX =====
-const addItemBtn = document.getElementById('addItemBtn');
-const historyBtn = document.getElementById('historyBtn');
+// Close all dropdowns when scrolling
+window.addEventListener(
+  "scroll",
+  function () {
+    // Close menu dropdown
+    const menuDropdown = document.getElementById("menuDropdown");
+    if (menuDropdown && menuDropdown.style.display === "block") {
+      menuDropdown.style.display = "none";
+    }
 
-if (addItemBtn) {
-    addItemBtn.addEventListener('click', () => {
-        openAddModal();      // existing function
-        menuDropdown.style.display = 'none';
-    });
-}
+    // Close filter panel
+    const filterPanel = document.getElementById("filterPanel");
+    if (filterPanel && filterPanel.style.display === "block") {
+      filterPanel.style.display = "none";
+    }
+  },
+  { passive: true },
+);
 
-if (historyBtn) {
-    historyBtn.addEventListener('click', () => {
-        toggleHistory();     // existing function
-        menuDropdown.style.display = 'none';
-    });
-}
-
+// Initialize menu - make sure it starts hidden
+document.addEventListener("DOMContentLoaded", function () {
+  const menuDropdown = document.getElementById("menuDropdown");
+  if (menuDropdown) {
+    menuDropdown.style.display = "none";
+  }
+});
 
 // footer copyright year update
 /* ===== FOOTER COPYRIGHT + ICON ===== */
 /* ===== FOOTER COPYRIGHT (STATIC) ===== */
 (function () {
-    const el = document.getElementById('copyrightText');
-    if (!el) return;
+  const el = document.getElementById("copyrightText");
+  if (!el) return;
 
-    const year = new Date().getFullYear();
-    el.innerHTML = `
+  const year = new Date().getFullYear();
+  el.innerHTML = `
         <span class="footer-github"></span>
         © ${year} All Rights Reserved |
         <a href="https://github.com/sngmz1" target="_blank" rel="noopener noreferrer">
-            GitHub – sngmz1
+            GitHub
         </a>
     `;
 })();
@@ -1519,54 +1741,52 @@ if (historyBtn) {
 // Toggle cart visibility
 /* ===== CART TOGGLE (FINAL & SAFE) ===== */
 function toggleCart() {
-    const cart = document.getElementById('cartSection');
-    const overlay = document.getElementById('cartOverlay');
+  const cart = document.getElementById("cartSection");
+  const overlay = document.getElementById("cartOverlay");
 
-    if (!cart || !overlay) {
-        console.error('Cart elements not found');
-        return;
-    }
+  if (!cart || !overlay) {
+    console.error("Cart elements not found");
+    return;
+  }
 
-    cart.classList.toggle('visible');
-    overlay.classList.toggle('visible');
+  cart.classList.toggle("visible");
+  overlay.classList.toggle("visible");
 }
-
 
 // ZOOM OFF
 /* ===== PREVENT ZOOM (DESKTOP + MOBILE SAFETY) ===== */
 
 // Disable CTRL + / - / 0 zoom
-window.addEventListener('keydown', function (e) {
-    if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')
-    ) {
-        e.preventDefault();
-    }
+window.addEventListener("keydown", function (e) {
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    (e.key === "+" || e.key === "-" || e.key === "=" || e.key === "0")
+  ) {
+    e.preventDefault();
+  }
 });
 
 // Disable mouse wheel zoom (Ctrl + Scroll)
 window.addEventListener(
-    'wheel',
-    function (e) {
-        if (e.ctrlKey) {
-            e.preventDefault();
-        }
-    },
-    { passive: false }
+  "wheel",
+  function (e) {
+    if (e.ctrlKey) {
+      e.preventDefault();
+    }
+  },
+  { passive: false },
 );
 
 // Disable double tap zoom (extra safety)
 let lastTouchEnd = 0;
 document.addEventListener(
-    'touchend',
-    function (e) {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-        }
-        lastTouchEnd = now;
-    },
-    false
+  "touchend",
+  function (e) {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  },
+  false,
 );
-

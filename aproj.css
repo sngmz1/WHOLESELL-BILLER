@@ -1,23 +1,44 @@
+/* =============================================
+   CSS STYLESHEET FOR WHOLESALE STORE APPLICATION
+   ============================================= */
+
+/*
+   GLOBAL RESET AND BASE STYLES
+   - Resets default browser margins and padding
+   - Sets box-sizing to border-box for consistent sizing model
+   - Ensures all elements include padding and border in their total width/height
+*/
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/*
+   BODY STYLING
+   - Sets modern font stack with fallbacks
+   - Beautiful purple gradient background
+   - Ensures minimum height of viewport
+   - Adds padding around the entire page content
+*/
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) fixed;
     min-height: 100vh;
     padding: 20px;
 }
 
+/*
+   MAIN CONTAINER
+   - Constrains maximum width for better readability
+   - Centers content horizontally on the page
+*/
 .container {
     max-width: 1200px;
     margin: 0 auto;
 }
 
 header {
-    background: white;
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 30px;
@@ -68,16 +89,147 @@ h1 {
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    transition: background 0.3s;
+    transition: 0.3s;
 }
 
 .search-box button:hover {
-    background: #0b1b63;
+    background: #daddec;
 }
 
-.main-content {
-    display: block;
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+    padding: 15px 20px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
+
+.navbar-brand {
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-search input {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    width: 250px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.navbar-search input:focus {
+    outline: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+}
+
+.navbar-search button {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-search button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-actions {
+    display: flex;
+    gap: 10px;
+    position: relative;
+}
+
+.navbar-actions button {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.navbar-actions button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== WORKING MENU DROPDOWN ===== */
+.menu-dropdown {
+     position: absolute;
+        top: 100%;
+        right: 180%;
+        left: 65%;
+        transform: translateX(-50%);
+        background:  white;
+        border-radius: 10px;
+        box-shadow: rgb(0, 0, 0);
+        /* padding: 2px 25px; */
+        display: flex;
+        z-index: 1001;
+        min-width: 120px;
+        display: none;
+}
+
+.menu-dropdown button {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    width: auto;
+    margin: 5px;
+    /* padding: 12px 16px; */
+    white-space: nowrap;
+    background:#667eea;
+    border: rgb(0, 0, 0);
+    text-align: left;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: rgb(255, 255, 255);
+}
+
+.menu-dropdown button:last-child {
+    border-bottom: none;
+}
+
+.menu-dropdown button:hover {
+    background:  #667eea;
+    color: #ffffff;
+    transform: translateX(5px);
+}
+
+
+
+
 
 .products-section {
     background: white;
@@ -93,7 +245,7 @@ h1 {
     border-radius: 8px;
     padding: 20px;
     transition: all 0.3s ease;
-    background: #f9f9f9;
+    background: white;
 }
 
 .product-card:hover {
@@ -127,10 +279,11 @@ h1 {
 }
 
 .price-section {
-    background: #f0f0f0;
+    background: white;
     padding: 10px;
     border-radius: 5px;
     margin: 15px 0;
+    border: 1px solid #eee;
 }
 
 .mrp-display {
@@ -174,6 +327,12 @@ h1 {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+}
+
+.pieces-icon {
+    font-size: 12px;
+    color: #666;
+    margin-left: 5px;
 }
 
 .add-btn {
@@ -809,50 +968,10 @@ h1 {
     .products-grid {
         grid-template-columns: 1fr;
     }
-}
-.menu-wrapper {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 2000;
-}
 
-.menu-btn {
-    background: #667eea;
-    color: white;
-    border: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    font-size: 22px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.menu-dropdown {
-    position: absolute;
-    top: 55px;
-    right: 0;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 160px;
-}
-
-.menu-dropdown button {
-    padding: 12px 15px;
-    border: none;
-    background: white;
-    text-align: left;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.menu-dropdown button:hover {
-    background: #f2f2f2;
+    .pieces-icon {
+        font-size: 10px;
+    }
 }
 
 
@@ -921,20 +1040,12 @@ h1 {
     background: #e74c3c;
     color: white;
 }
-/* Filter Panel Styles */
-.filter-btn {
-    padding: 12px 16px;
-    background: #444;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
 
+/* Filter Panel Styles */
 .filter-panel {
     position: absolute;
-    right: 20px;
-    top: 90px;
+    right: 0;
+    top: 100px;
     background: white;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -988,101 +1099,12 @@ h1 {
 }
 
 /* Clear Filters Button */
-.menu-wrapper {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 3000; /* 👈 very important */
-}
-
-.menu-btn {
-    background: #667eea;
-    color: white;
-    border: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    font-size: 22px;
-    cursor: pointer;
-}
-
-.menu-dropdown {
-    position: absolute;
-    top: 50px;
-    right: 0;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-    display: none;
-    flex-direction: column;
-    min-width: 160px;
-    z-index: 3001; /* 👈 dropdown above everything */
-}
-
-.menu-dropdown button {
-    padding: 12px 15px;
-    border: none;
-    background: white;
-    text-align: left;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.menu-dropdown button:hover {
-    background: #f2f2f2;
-}
-
-
-/* ===== FIXED 3 DOT MENU ===== */
-.menu-wrapper {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 5000;
-}
-
-.menu-btn {
-    background: #667eea;
-    color: white;
-    border: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    font-size: 22px;
-    cursor: pointer;
-}
-
-.menu-dropdown {
-    position: absolute;
-    top: 52px;
-    right: 0;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    display: none;
-    flex-direction: column;
-    min-width: 170px;
-    z-index: 5001;
-}
-
-.menu-dropdown button {
-    padding: 12px 16px;
-    border: none;
-    background: white;
-    text-align: left;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.menu-dropdown button:hover {
-    background: #f2f2f2;
-}
 
 /* ===== FILTER PANEL ===== */
 .filter-panel {
-    position: fixed;
-    top: 90px;
-    right: 20px;
+    position: absolute;
+    top: 100%;
+    right: 0;
     background: white;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -1090,6 +1112,7 @@ h1 {
     width: 260px;
     display: none;
     z-index: 4000;
+    color: black;
 }
 
 
@@ -1269,6 +1292,301 @@ h1 {
         font-size: 11px;
         padding: 10px 14px;
         border-radius: 16px;
+    }
+}
+
+/* ===== MOBILE RESPONSIVE DESIGN ===== */
+
+/* Mobile Styles - Max width 768px */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .store-title-card {
+        padding: 15px;
+        text-align: center;
+    }
+
+    .store-title-card h1 {
+        font-size: 1.5rem;
+        margin: 10px 0;
+    }
+
+    .badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+
+    /* Navbar Mobile */
+    .navbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 10px 15px;
+        position: relative; /* Remove sticky on mobile for better UX */
+    }
+
+    .navbar-brand {
+        font-size: 18px;
+        text-align: center;
+    }
+
+    .navbar-search {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .navbar-search input {
+        flex: 1;
+        width: auto;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .navbar-search button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .navbar-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .navbar-actions button {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+
+    /* Menu Button - Mobile Friendly */
+    #menuBtn {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 10;
+    }
+    
+
+    #menuBtn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    }
+
+    #menuBtn:active {
+        transform: scale(0.95);
+    }
+
+    /* Menu Dropdown - Mobile Optimized */
+    .menu-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 180%;
+        left: 65%;
+        transform: translateX(-50%);
+        background:  white;
+        border-radius: 10px;
+        box-shadow: rgb(0, 0, 0);
+        padding: 3px 2px;
+        z-index: 1001;
+        min-width: 110px;
+        display: none;
+    }
+
+.menu-dropdown button {
+    display: block;
+    width: auto;
+    height: auto;
+    margin: 3px;
+    
+        padding: 12px 85px 12px 12px;
+        background: #667eea;
+        border: 1px solid rgba(255, 255, 255, 0.445);
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+        font-size: 14px;
+        color: rgb(255, 252, 252);
+        white-space: nowrap;
+
+
+    }
+    .filter-group {
+        margin-bottom: 15px;
+    }
+    
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .filter-actions button {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    /* Products Grid Mobile */
+    .products-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .product-card {
+        padding: 15px;
+    }
+
+    .product-card h3 {
+        font-size: 16px;
+    }
+
+    .product-card p {
+        font-size: 14px;
+    }
+
+    .product-card button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    /* Cart Mobile */
+    .cart-section {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1001;
+        padding: 20px;
+        box-sizing: border-box;
+        background: white;
+        border-radius: 0;
+        transform: none;
+        max-width: none;
+        max-height: none;
+        overflow-y: auto;
+    }
+
+    .cart-items {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .cart-summary {
+        padding: 15px 0;
+    }
+
+    .cart-actions {
+        flex-direction: row;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .cart-actions button {
+        flex: 1;
+        min-width: 80px;
+        padding: 10px 6px;
+        font-size: 11px;
+        height: 45px;
+    }
+
+    /* Modal Mobile */
+    .modal-section {
+        width: 95%;
+        max-width: none;
+        margin: 10px;
+        padding: 20px;
+    }
+
+    .modal-content {
+        padding: 15px;
+    }
+
+    /* Footer Mobile */
+    .app-footer {
+        padding: 15px;
+        text-align: center;
+        font-size: 12px;
+    }
+}
+
+/* Small Mobile - Max width 480px */
+@media (max-width: 480px) {
+    body {
+        padding: 5px;
+    }
+
+    .navbar {
+        padding: 8px 10px;
+        gap: 10px;
+    }
+
+    .navbar-brand {
+        font-size: 16px;
+    }
+
+    .navbar-search input {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .navbar-search button {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .navbar-actions button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .store-title-card h1 {
+        font-size: 1.3rem;
+    }
+
+    .product-card {
+        padding: 12px;
+    }
+
+    .product-card h3 {
+        font-size: 15px;
+    }
+
+    .modal-section {
+        width: 98%;
+        margin: 5px;
+        padding: 15px;
     }
 }
 
