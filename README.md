@@ -119,24 +119,6 @@ Smooth workflow for daily wholesale billing
 
 🧮 Automatic calculations
 
-🎨 Simple & clean UI
-
-⚡ Lightweight and fast
-
-🧠 Beginner-friendly code structure
-
-📴 Can work without continuous internet
-
-📈 Future Improvements
-
-Permanent bill history storage
-
-PDF bill export
-
-User accounts for multiple shops
-
-GST / Tax support
-
 
 Mobile-first UI enhancement
 
