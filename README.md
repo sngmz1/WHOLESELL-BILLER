@@ -1,5 +1,9 @@
 # 🧾 WHOLESELL-BILLER
 
+
+https://github.com/user-attachments/assets/b530d575-4081-41a2-b86c-81553b45d8e6
+
+
 A simple, fast, and offline-friendly billing web app for wholesale businesses
 
 📌 About the Project
