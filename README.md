@@ -47,7 +47,7 @@ JavaScript – Logic, calculations, and interactions
 
 Git & GitHub – Version control and project management
 
-------------------------------------------------------------
+-----------------------------------------------------------
 ⚙️ How the Application Works (Step-by-Step)
 
 🔹 Step 1: Open the Application
