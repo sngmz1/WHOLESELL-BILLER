@@ -1777,7 +1777,7 @@ window.addEventListener(
   { passive: false },
 );
 
-// Disable double tap zoom (extra safety)
+// Disable double tap zoom
 let lastTouchEnd = 0;
 document.addEventListener(
   "touchend",

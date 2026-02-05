@@ -1540,7 +1540,7 @@ h1 {
     }
 }
 
-/* Small Mobile - Max width 480px */
+/*Good Small Mobile - Max width 480px */
 @media (max-width: 480px) {
     body {
         padding: 5px;
