@@ -17,7 +17,7 @@ It is designed especially for small and medium wholesale shops that want a simpl
 
 This project focuses on:
 
-Speed ⚡
+Speed ⚡ 
 
 Simplicity 🧠
 
