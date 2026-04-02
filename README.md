@@ -6,7 +6,7 @@
 https://github.com/user-attachments/assets/2aaecd42-71ab-4a2c-bdf3-eacb54820458
 
 
-
+ 
 
 A simple, fast, and offline-friendly billing web app for wholesale businesses
 
